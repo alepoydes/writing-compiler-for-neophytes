@@ -1,6 +1,11 @@
 # Теория компиляторов для неофитов
 ## Как построен этот курс
 
+[Содержание](content.md)
+[> Введение](introduction.md)
+
+-------
+
 Курс построен вокруг написания компилятора языка
 [Rust](https://www.rust-lang.org/en-US/), генерирующий байткод
 [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine).  Написание
