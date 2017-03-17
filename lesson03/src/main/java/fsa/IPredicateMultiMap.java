@@ -9,10 +9,10 @@ import java.util.function.Function;
  * предткаты, диапазоны значений и т.п.
  * Эта коллекция похожа на java.util.Map<K,V>,
  * тем что тоже ищет значения V по ключу K,
- * однако IPredicateMap может добавлять ключи группами,
+ * однако IPredicateMultiMap может добавлять ключи группами,
  * где группа описывается типом P.
  */
-public interface IPredicateMap<P,K,V> {
+public interface IPredicateMultiMap<P,K,V> {
     /**
      * Ищет значение для ключа key.
      */
@@ -29,7 +29,7 @@ public interface IPredicateMap<P,K,V> {
     /**
      * Оьединяет массив с массивом other.
      */
-    default void mergeMap(IPredicateMap<P,K,V> other, Function<V,V> map) {
+    default void mergeMap(IPredicateMultiMap<P,K,V> other, Function<V,V> map) {
         for(Map.Entry<P,V> entry: other.entrySet())
             this.put(entry.getKey(), map.apply(entry.getValue()));
     }

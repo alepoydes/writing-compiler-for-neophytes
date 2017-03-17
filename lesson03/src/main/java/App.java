@@ -32,7 +32,7 @@ public class App {
      * Лексер для регулярных выражений в общепринятой записи.
      */
     static CharLexer<Token,Character> makeLexer() {
-        IPredicateMapFactory<Character,Token,State> factory=new KeyPredicateMapFactory();        
+        IPredicateMultiMapFactory<Character,Token,State> factory=new KeyPredicateMultiMapFactory();        
         Combinators<Character,Token,Character> combinators=new Combinators(factory);
         FSA<Character,Token,Character> star=combinators.literal(asList("*"),Token.STAR);
         FSA<Character,Token,Character> plus=combinators.literal(asList("+"),Token.PLUS);

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class CombinatorsTest {
     @Test public void testLiteral() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         FSA<Character,Integer,Character> automaton=combinators.literal(Arrays.asList('a','b','c'),0);
         assertTrue(automaton.match(Arrays.asList('a','b','c')));
         assertFalse(automaton.match(Arrays.asList('a','b')));
@@ -15,7 +15,7 @@ public class CombinatorsTest {
         assertFalse(automaton.match(Arrays.asList('b','c','d')));
     }
     @Test public void testUnion() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         List<Character> s1=Arrays.asList('a','b');
         List<Character> s2=Arrays.asList('b');
         FSA<Character,Integer,Character> a1=combinators.literal(s1,0);
@@ -26,7 +26,7 @@ public class CombinatorsTest {
         assertFalse(automaton.match(Arrays.asList('a')));
     }
     @Test public void testAnyOf() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         FSA<Character,Integer,Character> automaton=combinators.anyOf(Arrays.asList('a','b'),0);
         assertFalse(automaton.match(Arrays.asList('a','b')));
         assertTrue(automaton.match(Arrays.asList('a')));
@@ -34,7 +34,7 @@ public class CombinatorsTest {
         assertFalse(automaton.match(Arrays.asList('c'))); 
     }
     @Test public void testConcatenation() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         List<Character> s1=Arrays.asList('a','b');
         List<Character> s2=Arrays.asList('c');
         FSA<Character,Integer,Character> a1=combinators.literal(s1,0);
@@ -46,7 +46,7 @@ public class CombinatorsTest {
         assertFalse(automaton.match(Arrays.asList('a','b','c','c')));
     }
     @Test public void testStar() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         List<Character> s1=Arrays.asList('a','b');
         FSA<Character,Integer,Character> a1=combinators.literal(s1,0);
         FSA<Character,Integer,Character> automaton=combinators.star(a1, 0);
@@ -59,7 +59,7 @@ public class CombinatorsTest {
     };
 
     @Test public void testRepeat() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         List<Character> s1=Arrays.asList('a','b');
         FSA<Character,Integer,Character> a1=combinators.literal(s1,0);
         FSA<Character,Integer,Character> automaton=combinators.repeat(a1);
@@ -71,7 +71,7 @@ public class CombinatorsTest {
         assertFalse(automaton.match(Arrays.asList('b','a')));
     };
     @Test public void testOption() {
-        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMapFactory());
+        Combinators<Character,Integer,Character> combinators=new Combinators(new KeyPredicateMultiMapFactory());
         List<Character> s1=Arrays.asList('a','b');
         FSA<Character,Integer,Character> a1=combinators.literal(s1,0);
         FSA<Character,Integer,Character> automaton=combinators.option(a1,0);

@@ -22,7 +22,7 @@ public class LexerTest {
     };
 
     public CharLexer<Integer,Character> makeLexer() {
-        IPredicateMapFactory<Character,Integer,State> factory=new KeyPredicateMapFactory();        
+        IPredicateMultiMapFactory<Character,Integer,State> factory=new KeyPredicateMultiMapFactory();        
         Combinators<Character,Integer,Character> combinators=new Combinators(factory);
         FSA<Character,Integer,Character> first=combinators.literal(asList("ab"),0);
         FSA<Character,Integer,Character> second=combinators.literal(asList("c"),1);

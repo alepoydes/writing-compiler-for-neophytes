@@ -2,9 +2,9 @@ package wcn.fsa;
 
 public class Combinators<T,F,P> {
     /** Конструктор хранилищ, передаваемый создаваемым автоматам. */
-    protected IPredicateMapFactory<P,T,State> factory;
+    protected IPredicateMultiMapFactory<P,T,State> factory;
     /** Конструктор просто передает все параметры конструктору автомата. */
-    public Combinators(IPredicateMapFactory<P,T,State> factory) {
+    public Combinators(IPredicateMultiMapFactory<P,T,State> factory) {
         this.factory=factory;
     }
     /**

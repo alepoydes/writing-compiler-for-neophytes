@@ -16,7 +16,7 @@ public class Lexer<T,F,P> {
      * Обычно автоматы должны иметь разные маркеры остановочных состояний.
      */
     public Lexer(Iterable<FSA<T,F,P>> lexemes) {
-        IPredicateMapFactory<P,T,State> factory=new KeyPredicateMapFactory();
+        IPredicateMultiMapFactory<P,T,State> factory=new KeyPredicateMultiMapFactory();
         Combinators<T,F,P> combinators=new Combinators(factory);
         this.automaton=combinators.union(lexemes);
         this.reset();

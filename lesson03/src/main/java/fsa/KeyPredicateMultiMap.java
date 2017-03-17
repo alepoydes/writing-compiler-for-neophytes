@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.AbstractMap;
 
 /**
- * Реализация IPredicateMap, добавляющая только один ключ
+ * Реализация IPredicateMultiMap, добавляющая только один ключ
  * одновременно. В этом случае предикат есть равенство ключу.
  */
-public class KeyPredicateMap<K,V> implements IPredicateMap<K,K,V> {
+public class KeyPredicateMultiMap<K,V> implements IPredicateMultiMap<K,K,V> {
     // Внутреннее хранилище для массива
     private HashMap<K,HashSet<V>> map;
     // конструктор пустого массива
-    public KeyPredicateMap() {
+    public KeyPredicateMultiMap() {
         this.map=new HashMap();
     }
     // Реализация интерфейса
