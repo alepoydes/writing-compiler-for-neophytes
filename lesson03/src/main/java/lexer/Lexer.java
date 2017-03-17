@@ -1,5 +1,7 @@
 package wcn.lexer;
 
+import wcn.fsa.*;
+
 import java.util.Optional;
 import java.util.List;
 import java.util.LinkedList;

@@ -1,4 +1,4 @@
-package wcn.lexer;
+package wcn.fsa;
 
 import java.util.Optional;
 import java.util.Map;

@@ -28,7 +28,7 @@ dependencies {
 }
 
 // Define the main class for the application
-mainClassName = 'wcn.lexer.App'
+mainClassName = 'wcn.App'
 
 jar {
     manifest {

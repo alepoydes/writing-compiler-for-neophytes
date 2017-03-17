@@ -1,4 +1,4 @@
-package wcn.lexer;
+package wcn;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

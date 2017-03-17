@@ -1,10 +1,10 @@
-package wcn.lexer;
+package wcn.fsa;
 
 public class Combinators<T,F,P> {
     /** Конструктор хранилищ, передаваемый создаваемым автоматам. */
     protected IPredicateMapFactory<P,T,State> factory;
     /** Конструктор просто передает все параметры конструктору автомата. */
-    Combinators(IPredicateMapFactory<P,T,State> factory) {
+    public Combinators(IPredicateMapFactory<P,T,State> factory) {
         this.factory=factory;
     }
     /**

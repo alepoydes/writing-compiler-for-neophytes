@@ -1,4 +1,4 @@
-package wcn.lexer;
+package wcn.fsa;
 
 /**
  * Состояние конечного автомата.

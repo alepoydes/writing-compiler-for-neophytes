@@ -1,4 +1,7 @@
-package wcn.lexer;
+package wcn;
+
+import wcn.fsa.*;
+import wcn.lexer.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

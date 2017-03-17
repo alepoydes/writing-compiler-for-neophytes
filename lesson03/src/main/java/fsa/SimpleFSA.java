@@ -1,4 +1,4 @@
-package wcn.lexer;
+package wcn.fsa;
 
 class SimpleFSA<K,F> extends FSA<K,F,K> {
     SimpleFSA() {
