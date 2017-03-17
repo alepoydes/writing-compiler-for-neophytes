@@ -1,4 +1,4 @@
-package wcn.fsa; 
+package wcn.terminal; 
 
 /**
  * Конструктор объектов типа KeyPreducateMap.

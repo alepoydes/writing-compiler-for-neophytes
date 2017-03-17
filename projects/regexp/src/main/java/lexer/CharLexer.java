@@ -1,6 +1,7 @@
 package wcn.lexer;
 
 import wcn.fsa.*;
+import wcn.terminal.*;
 
 import java.util.function.Function;
 import java.util.Iterator;
@@ -9,8 +10,8 @@ import java.util.Iterator;
  * Реализация лексера для Unicode символов в качестве терминалов.
  * Умеет считать номер строки и столбца во входном файле.
  */
-public class CharLexer<F,P> extends Lexer<Character,F,P> {
-    public CharLexer(Iterable<FSA<Character,F,P>> lexemes) {
+public class CharLexer<F,P> extends Lexer<UChar,F,P> {
+    public CharLexer(Iterable<FSA<UChar,F,P>> lexemes) {
         super(lexemes);
     }
     public void reset() {
@@ -18,16 +19,16 @@ public class CharLexer<F,P> extends Lexer<Character,F,P> {
         this.currentLine=this.line=1; 
         this.currentColumn=this.column=1;
     };
-    @Override public CharLexerResult<F> parse_symbol(Character symbol) throws CharLexerError {
+    @Override public CharLexerResult<F> parse_symbol(UChar symbol) throws CharLexerError {
         try {
-            LexerResult<Character, F> result=super.parse_symbol(symbol);
+            LexerResult<UChar, F> result=super.parse_symbol(symbol);
             CharLexerResult enchanced=null;
             if(result!=null) {
                 enchanced=new CharLexerResult(result.getString(), result.getLexeme(), this.line, this.column);
                 this.line=this.currentLine;
                 this.column=this.currentColumn;
             };
-            switch(symbol) {
+            switch(symbol.toChar()) {
                 case '\r': break;
                 case '\n': this.currentLine++; this.currentColumn=1; break;
                 default: this.currentColumn++; 
@@ -39,7 +40,7 @@ public class CharLexer<F,P> extends Lexer<Character,F,P> {
     }
     @Override public CharLexerResult<F> parse_eol() throws CharLexerError {
         try {
-            LexerResult<Character, F> result=super.parse_eol();
+            LexerResult<UChar, F> result=super.parse_eol();
             if(result==null) return null;
             return new CharLexerResult(result.getString(), result.getLexeme(), this.line, this.column);
         } catch(LexerError error) {

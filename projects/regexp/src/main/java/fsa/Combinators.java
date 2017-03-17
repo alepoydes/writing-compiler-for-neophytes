@@ -1,5 +1,7 @@
 package wcn.fsa;
 
+import wcn.terminal.*;
+
 public class Combinators<T,F,P> {
     /** Конструктор хранилищ, передаваемый создаваемым автоматам. */
     protected IPredicateMultiMapFactory<P,T,State> factory;

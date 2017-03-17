@@ -1,6 +1,7 @@
 package wcn.lexer;
 
 import wcn.fsa.*;
+import wcn.terminal.*;
 
 import java.util.Optional;
 import java.util.List;

@@ -1,5 +1,7 @@
 package wcn.fsa;
 
+import wcn.terminal.*;
+
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;

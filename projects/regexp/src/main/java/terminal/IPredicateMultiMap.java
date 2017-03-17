@@ -1,4 +1,4 @@
-package wcn.fsa;
+package wcn.terminal;
 
 import java.util.Optional;
 import java.util.Map;

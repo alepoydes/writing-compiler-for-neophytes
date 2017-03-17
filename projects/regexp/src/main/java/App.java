@@ -2,6 +2,7 @@ package wcn;
 
 import wcn.fsa.*;
 import wcn.lexer.*;
+import wcn.terminal.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,12 +12,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
 public class App {
-    public static List<Character> asList(String str) {
-        return str.chars().mapToObj(i -> (char)i).collect(Collectors.toList());
-    };
     public static<T> List<T> asList(Iterator<T> src) {
         List<T> result=new ArrayList();
         while(src.hasNext()) result.add(src.next());
@@ -31,37 +28,40 @@ public class App {
     /**
      * Лексер для регулярных выражений в общепринятой записи.
      */
-    static CharLexer<Token,Character> makeLexer() {
-        IPredicateMultiMapFactory<Character,Token,State> factory=new KeyPredicateMultiMapFactory();        
-        Combinators<Character,Token,Character> combinators=new Combinators(factory);
-        FSA<Character,Token,Character> star=combinators.literal(asList("*"),Token.STAR);
-        FSA<Character,Token,Character> plus=combinators.literal(asList("+"),Token.PLUS);
-        FSA<Character,Token,Character> option=combinators.literal(asList("?"),Token.OPTION);
-        FSA<Character,Token,Character> begin=combinators.literal(asList("("),Token.BEGIN);
-        FSA<Character,Token,Character> end=combinators.literal(asList(")"),Token.END);
-        FSA<Character,Token,Character> or=combinators.literal(asList("|"),Token.OR);
-        FSA<Character,Token,Character> any=combinators.literal(asList("."),Token.ANY);
-        HashSet<Character> reserved=new HashSet(Arrays.asList('*','+','?','(',')','|','\\','.'));
-        HashSet<Character> ordinary=new HashSet();
-        for(char c=32; c<127; c++) if(!reserved.contains(c)) ordinary.add(c);
-        FSA<Character,Token,Character> symbolOrdinary=combinators.anyOf(ordinary,Token.LITERAL);
-        FSA<Character,Token,Character> symbolEscaped=combinators.concatenation(Arrays.asList(
-            combinators.literal(Arrays.asList('\\'),Token.LITERAL),
+    static CharLexer<Token,UChar> makeLexer() {
+        IPredicateMultiMapFactory<UChar,Token,State> factory=new KeyPredicateMultiMapFactory();        
+        Combinators<UChar,Token,UChar> combinators=new Combinators(factory);
+        FSA<UChar,Token,UChar> star=combinators.literal(UChar.asList("*"),Token.STAR);
+        FSA<UChar,Token,UChar> plus=combinators.literal(UChar.asList("+"),Token.PLUS);
+        FSA<UChar,Token,UChar> option=combinators.literal(UChar.asList("?"),Token.OPTION);
+        FSA<UChar,Token,UChar> begin=combinators.literal(UChar.asList("("),Token.BEGIN);
+        FSA<UChar,Token,UChar> end=combinators.literal(UChar.asList(")"),Token.END);
+        FSA<UChar,Token,UChar> or=combinators.literal(UChar.asList("|"),Token.OR);
+        FSA<UChar,Token,UChar> any=combinators.literal(UChar.asList("."),Token.ANY);
+        HashSet<UChar> reserved=new HashSet(UChar.asList("*+?()|\\."));
+        HashSet<UChar> ordinary=new HashSet();
+        for(char c=32; c<127; c++) {
+            UChar uc=new UChar(c);
+            if(!reserved.contains(uc)) ordinary.add(uc);
+        };
+        FSA<UChar,Token,UChar> symbolOrdinary=combinators.anyOf(ordinary,Token.LITERAL);
+        FSA<UChar,Token,UChar> symbolEscaped=combinators.concatenation(Arrays.asList(
+            combinators.literal(UChar.asList("\\"),Token.LITERAL),
             combinators.anyOf(reserved,Token.LITERAL)
         ));
-        FSA<Character,Token,Character> symbol=combinators.union(Arrays.asList(symbolOrdinary,symbolEscaped));
+        FSA<UChar,Token,UChar> symbol=combinators.union(Arrays.asList(symbolOrdinary,symbolEscaped));
         return new CharLexer(Arrays.asList(star, plus, option, begin, end, or, symbol, any));
     };
 
     public static void main(String[] args) throws IOException {
-        CharLexer<Token,Character> lexer=makeLexer();
+        CharLexer<Token,UChar> lexer=makeLexer();
         BufferedReader input=new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         String str;
         System.out.println("Enter regexp:");
         while((str=input.readLine())!=null) {
-            List<Character> list=asList(str);
+            List<UChar> list=UChar.asList(str);
             try {
-                ILexerIterator<LexerResult<Character,Token>> iterator=lexer.parseE(list);
+                ILexerIterator<LexerResult<UChar,Token>> iterator=lexer.parseE(list);
                 while(iterator.hasNextE())
                     System.out.println(iterator.nextE()); 
             } catch(LexerError error) {

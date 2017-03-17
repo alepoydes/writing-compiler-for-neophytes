@@ -1,16 +1,18 @@
 package wcn.lexer;
 
+import wcn.terminal.*;
+
 import java.util.List;
 
 /**
  * Аналог LexerResult, но также хранит информацию о
  * позиции начала лексемы.
  */
-public class CharLexerResult<F> extends LexerResult<Character, F> {
+public class CharLexerResult<F> extends LexerResult<UChar, F> {
     /**
      * Создает хранилище для лексемы lexeme и соотвествующей ей подстроки string.
      */
-    CharLexerResult(List<Character> string, F lexeme, int line, int column) {
+    CharLexerResult(List<UChar> string, F lexeme, int line, int column) {
         super(string, lexeme);
         this.line=line;
         this.column=column;
