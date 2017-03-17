@@ -5,13 +5,14 @@ import wcn.terminal.*;
 
 import java.util.function.Function;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Реализация лексера для Unicode символов в качестве терминалов.
  * Умеет считать номер строки и столбца во входном файле.
  */
 public class CharLexer<F,P> extends Lexer<UChar,F,P> {
-    public CharLexer(Iterable<FSA<UChar,F,P>> lexemes) {
+    public CharLexer(List<FSA<UChar,F,P>> lexemes) {
         super(lexemes);
     }
     public void reset() {

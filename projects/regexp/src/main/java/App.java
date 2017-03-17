@@ -29,8 +29,7 @@ public class App {
      * Лексер для регулярных выражений в общепринятой записи.
      */
     static CharLexer<Token,UChar> makeLexer() {
-        IPredicateMultiMapFactory<UChar,Token,State> factory=new KeyPredicateMultiMapFactory();        
-        Combinators<UChar,Token,UChar> combinators=new Combinators(factory);
+        Combinators<UChar,Token,UChar> combinators=new Combinators(new KeyPredicateMultiMap());
         FSA<UChar,Token,UChar> star=combinators.literal(UChar.asList("*"),Token.STAR);
         FSA<UChar,Token,UChar> plus=combinators.literal(UChar.asList("+"),Token.PLUS);
         FSA<UChar,Token,UChar> option=combinators.literal(UChar.asList("?"),Token.OPTION);

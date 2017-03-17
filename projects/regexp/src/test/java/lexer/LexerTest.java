@@ -20,8 +20,7 @@ public class LexerTest {
     };
 
     public CharLexer<Integer,UChar> makeLexer() {
-        IPredicateMultiMapFactory<UChar,Integer,State> factory=new KeyPredicateMultiMapFactory();        
-        Combinators<UChar,Integer,UChar> combinators=new Combinators(factory);
+        Combinators<UChar,Integer,UChar> combinators=new Combinators(new KeyPredicateMultiMap());
         FSA<UChar,Integer,UChar> first=combinators.literal(UChar.asList("ab"),0);
         FSA<UChar,Integer,UChar> second=combinators.literal(UChar.asList("c"),1);
         return new CharLexer(Arrays.asList(first, second));

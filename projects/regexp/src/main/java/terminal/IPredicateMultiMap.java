@@ -12,7 +12,11 @@ import java.util.function.Function;
  * однако IPredicateMultiMap может добавлять ключи группами,
  * где группа описывается типом P.
  */
-public interface IPredicateMultiMap<P,K,V> {
+public interface IPredicateMultiMap<P,K,V, SELF extends IPredicateMultiMap<P,K,V,SELF>> {
+    /**
+     * Создает пустую коллекцию
+     */
+    SELF empty();
     /**
      * Ищет значение для ключа key.
      */
@@ -29,7 +33,7 @@ public interface IPredicateMultiMap<P,K,V> {
     /**
      * Оьединяет массив с массивом other.
      */
-    default void mergeMap(IPredicateMultiMap<P,K,V> other, Function<V,V> map) {
+    default void mergeMap(IPredicateMultiMap<P,K,V,?> other, Function<V,V> map) {
         for(Map.Entry<P,V> entry: other.entrySet())
             this.put(entry.getKey(), map.apply(entry.getValue()));
     }

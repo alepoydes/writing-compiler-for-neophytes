@@ -4,9 +4,9 @@ import wcn.terminal.*;
 
 public class Combinators<T,F,P> {
     /** Конструктор хранилищ, передаваемый создаваемым автоматам. */
-    protected IPredicateMultiMapFactory<P,T,State> factory;
+    protected IPredicateMultiMap<P,T,State,?> factory;
     /** Конструктор просто передает все параметры конструктору автомата. */
-    public Combinators(IPredicateMultiMapFactory<P,T,State> factory) {
+    public<M extends IPredicateMultiMap<P,T,State,M>> Combinators(M factory) {
         this.factory=factory;
     }
     /**

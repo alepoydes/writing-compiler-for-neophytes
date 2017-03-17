@@ -16,10 +16,13 @@ public class Lexer<T,F,P> {
      * Лексемы идентифицируются маркерами остановочных состояний.
      * Обычно автоматы должны иметь разные маркеры остановочных состояний.
      */
-    public Lexer(Iterable<FSA<T,F,P>> lexemes) {
-        IPredicateMultiMapFactory<P,T,State> factory=new KeyPredicateMultiMapFactory();
-        Combinators<T,F,P> combinators=new Combinators(factory);
-        this.automaton=combinators.union(lexemes);
+    public Lexer(List<FSA<T,F,P>> lexemes) {
+        if(!lexemes.isEmpty()) {
+            Combinators<T,F,P> combinators=new Combinators(lexemes.get(0).getFactory());
+            this.automaton=combinators.union(lexemes);
+        } else {
+            this.automaton=new FSA(new KeyPredicateMultiMap());
+        };
         this.reset();
     }
     public void reset() {

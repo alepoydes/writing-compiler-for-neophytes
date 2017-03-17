@@ -86,7 +86,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
      * Конструктор, создающий автомат с единственным состоянием,
      * оно же стартовое, без переходов и без остановочных состояний.
      */
-    public FSA(IPredicateMultiMapFactory<P,T,State> factory) {
+    public<M extends IPredicateMultiMap<P,T,State,M>> FSA(M factory) {
         this.factory=factory;
         this.activeStates=new HashSet();
         this.transitions=new HashMap();
@@ -100,7 +100,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     public State newState() {  
         State state=new State(this.numberOfStates++);
         if(state.getId()==0) this.activeStates.add(state);
-        this.transitions.put(state, this.factory.make());
+        this.transitions.put(state, this.factory.empty());
         this.markers.put(state, new HashSet());
         return state;
     };
@@ -133,7 +133,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
         for(State state: automaton.activeStates) 
             this.activeStates.add(new State(first.getId()+state.getId()));
         // Добавляем переходы
-        for(Map.Entry<State,IPredicateMultiMap<P,T,State>> entry: automaton.transitions.entrySet())
+        for(Map.Entry<State,IPredicateMultiMap<P,T,State,?>> entry: automaton.transitions.entrySet())
             this.transitions.get(new State(entry.getKey().getId()+first.getId()))
                 .mergeMap(entry.getValue(), (state) -> new State(state.getId()+first.getId()));
         // Добавляем маркеры
@@ -143,7 +143,9 @@ public class FSA<T,F,P> implements IFSA<T,F> {
         };
         return first;
     };
-
+    public IPredicateMultiMap<P,T,State,?> getFactory() {
+        return this.factory;
+    }
     // Детали реализации
     /**
      * Перечень всех достигнутых к настоящему моменту состояний.
@@ -157,7 +159,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     /**
      * Хранилище всех переходов.
      */
-    protected HashMap<State, IPredicateMultiMap<P,T,State>> transitions;
+    protected HashMap<State, IPredicateMultiMap<P,T,State,?>> transitions;
     /**
      * Хранилище маркеров остановочных состояний
      */
@@ -165,5 +167,5 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     /**
      * Конструктор хранилищ для transitions.
      */
-    protected IPredicateMultiMapFactory<P,T,State> factory;
+    protected IPredicateMultiMap<P,T,State,?> factory;
 };

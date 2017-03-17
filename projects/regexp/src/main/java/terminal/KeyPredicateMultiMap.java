@@ -9,12 +9,15 @@ import java.util.AbstractMap;
  * Реализация IPredicateMultiMap, добавляющая только один ключ
  * одновременно. В этом случае предикат есть равенство ключу.
  */
-public class KeyPredicateMultiMap<K,V> implements IPredicateMultiMap<K,K,V> {
+public class KeyPredicateMultiMap<K,V> implements IPredicateMultiMap<K,K,V,KeyPredicateMultiMap<K,V>> {
     // Внутреннее хранилище для массива
     private HashMap<K,HashSet<V>> map;
     // конструктор пустого массива
     public KeyPredicateMultiMap() {
         this.map=new HashMap();
+    }
+    public KeyPredicateMultiMap<K,V> empty() {
+        return new KeyPredicateMultiMap();
     }
     // Реализация интерфейса
     public Iterable<V> get(K key) {
