@@ -5,6 +5,7 @@ import wcn.terminal.*;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -26,10 +27,14 @@ public class FSA<T,F,P> implements IFSA<T,F> {
             this.doEpsilonTransition(this.activeStates);
         };
     };
-    protected void doEpsilonTransition(HashSet<State> states) {
-        HashSet<State> suspects=states;
+    /** 
+     * Дополняет набор состояний states всеми состояниями, 
+     * в которые можно попасть эпсилон-переходами.
+     */
+    protected void doEpsilonTransition(Set<State> states) {
+        Set<State> suspects=states;
         while(!suspects.isEmpty()) {
-            HashSet<State> nextSuspects=new HashSet();
+            Set<State> nextSuspects=new HashSet();
             for(State from: suspects) 
                 for(State to: this.transitions.get(from).get(null)) 
                     if(!states.contains(to)) nextSuspects.add(to);
@@ -62,9 +67,25 @@ public class FSA<T,F,P> implements IFSA<T,F> {
      * Возвращает все достигнутые к настоящему моменту состояния.
      * Стартовое состояние всегда 0.
      */
-    public Iterable<State> getActiveStates() {
+    public Collection<State> getActiveStates() {
         return this.activeStates;
     };
+    /**
+     * Переходит в указанное состояние
+     */
+    public void setActiveStates(Collection<State> states) {
+        this.activeStates=new HashSet(states);
+        this.doEpsilonTransition(this.activeStates);
+    }
+    /**
+     * Возвращает все переходы
+     */
+    public IPredicateMultiMap<P,T,State,?> getActiveTransitions() {
+        IPredicateMultiMap<P,T,State,?> result=this.factory.empty();
+        for(State state: this.activeStates)
+            result.mergeMap(this.transitions.get(state), (x) -> x);
+        return result;
+    }
     /**
      * Возвразает все остановчные состояния.
      */
@@ -146,6 +167,25 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     public IPredicateMultiMap<P,T,State,?> getFactory() {
         return this.factory;
     }
+    /** Методы Object */
+    @Override public String toString() { 
+        StringBuilder result=new StringBuilder();
+        for(State state: this.transitions.keySet()) {
+            result.append(String.format("#%d", state.getId()));
+            boolean isFirst=true;
+            for(F marker: this.markers.get(state))
+                if(isFirst) { result.append(String.format(":%s", marker)); isFirst=false; }
+                else result.append(String.format(",%s", marker));
+            result.append(":");
+            for(Map.Entry<P,State> entry: this.transitions.get(state).entrySet()) {
+                P symbol=entry.getKey();
+                if(symbol!=null) result.append(String.format(" '%s'>%d", symbol, entry.getValue().getId()));
+                else result.append(String.format(" eps>%d", entry.getValue().getId()));
+            };
+            result.append("\n");
+        };
+        return result.toString();
+    };
     // Детали реализации
     /**
      * Перечень всех достигнутых к настоящему моменту состояний.

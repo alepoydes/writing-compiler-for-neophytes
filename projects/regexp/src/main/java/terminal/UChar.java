@@ -2,11 +2,13 @@ package wcn.terminal;
 
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * Обертка на Character, реализующая дополнительные интерфейсы
  */
-public class UChar implements ICharSet<UChar> {
+public class UChar implements ICharSet<UChar, UChar> {
     /** Значение */
     private char value;
     /** Конструкторы */
@@ -15,8 +17,13 @@ public class UChar implements ICharSet<UChar> {
     /** Возвращает примитивное значение */
     public char toChar() { return this.value; }
     /** Реализация ICharSet */
-    public UChar intersection(UChar other) {
+    public UChar intersect(UChar other) {
         return (this.equals(other))?this:null;
+    }
+    public Collection<UChar> subtract(UChar other) {
+        ArrayList<UChar> result=new ArrayList();
+        if(this.value!=other.value) result.add(new UChar(this.value));
+        return result;
     }
     /** Конвертирует строку в последовательность символов */
     public static List<UChar> asList(String str) {

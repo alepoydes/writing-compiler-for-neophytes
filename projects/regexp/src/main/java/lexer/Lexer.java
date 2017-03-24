@@ -17,12 +17,12 @@ public class Lexer<T,F,P> {
      * Обычно автоматы должны иметь разные маркеры остановочных состояний.
      */
     public Lexer(List<FSA<T,F,P>> lexemes) {
+        FSA<T,F,P> fsa;
         if(!lexemes.isEmpty()) {
             Combinators<T,F,P> combinators=new Combinators(lexemes.get(0).getFactory());
-            this.automaton=combinators.union(lexemes);
-        } else {
-            this.automaton=new FSA(new KeyPredicateMultiMap());
-        };
+            fsa=combinators.union(lexemes);
+        } else fsa=new FSA(new KeyPredicateMultiMap());
+        this.automaton=new DFA(new KeyPredicateMap(), fsa);
         this.reset();
     }
     public void reset() {
@@ -43,12 +43,9 @@ public class Lexer<T,F,P> {
             this.terminals.add(symbol);
             return null;
         };
-        Iterator<F> iterator=this.automaton.getMarkers().iterator();
-        if(!iterator.hasNext()) 
+        F lexeme=this.automaton.getMarker();
+        if(lexeme==null) 
             throw new LexerError(String.format("Unexpected symbol '%s'", symbol.toString()));
-        F lexeme=iterator.next();
-        if(iterator.hasNext()) 
-            throw new LexerError(String.format("Ambiguity %s,%s,..", lexeme.toString(), iterator.next().toString()));
         LexerResult<T,F> result=new LexerResult(this.terminals, lexeme);
         this.startNewToken();
         if(!this.automaton.makeTransition(symbol)) 
@@ -61,12 +58,8 @@ public class Lexer<T,F,P> {
      * Выбрасывает исключение, если найти лексему не удалось выделить.
      */
     public LexerResult<T,F> parse_eol() throws LexerError {
-        Iterator<F> iterator=this.automaton.getMarkers().iterator();
-        if(!iterator.hasNext()) 
-            throw new LexerError(String.format("Unexpected end of line"));
-        F lexeme=iterator.next();
-        if(iterator.hasNext()) 
-            throw new LexerError(String.format("Ambiguity %s,%s,..", lexeme.toString(), iterator.next().toString()));        
+        F lexeme=this.automaton.getMarker();
+        if(lexeme==null) throw new LexerError(String.format("Unexpected end of line"));
         LexerResult<T,F> result=new LexerResult(this.terminals, lexeme);
         return result;
     };
@@ -86,7 +79,7 @@ public class Lexer<T,F,P> {
     /**
      * Хранилице автомата, делающего всю работу
      */
-    private IFSA<T,F> automaton;
+    private IDFA<T,F> automaton;
     /**
      * Хранилице подстроки, соответсвующей текущей лексеме
      */
