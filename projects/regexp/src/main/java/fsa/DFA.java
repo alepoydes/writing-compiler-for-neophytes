@@ -28,6 +28,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         this.transitions=new ArrayList<IPredicateMap<P,T,State,?>>();
         this.markers=new ArrayList<F>();
         this.numberOfStates=0;
+        this.stateNames=new ArrayList();
         this.reset();
     };
     /** Конструктор, строящий детерминированный автомат из недетерминированного.
@@ -41,7 +42,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         Set<State> old_initial=new HashSet(automaton.getActiveStates());
         // Создаем отображение старых состояний на новые
         Map<Set<State>,State> old2new=new HashMap();
-        State new_initial=this.newState(old_initial);
+        State new_initial=this.newState(old_initial,automaton);
         old2new.put(old_initial,new_initial);
         // Создаем массив состояний, которые мы еще не рассмотрели
         Deque<Set<State>> unprocessed=new ArrayDeque();
@@ -73,7 +74,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
                 State target;
                 if(old2new.containsKey(old_targets)) target=old2new.get(old_targets);
                 else {
-                    target=this.newState(old_targets);
+                    target=this.newState(old_targets,automaton);
                     old2new.put(old_targets,target);
                     // Если состояние новое, то добавляем его в список непроанализированных состояний
                     unprocessed.addLast(old_targets);
@@ -157,19 +158,28 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     public State getActiveState() { return new State(this.activeState); }
     /** Методы конструирования автомата */
     public State newState() {  
+        return this.newState(String.format("%d",this.numberOfStates));
+    };
+    /** Новое состояние с данным именем */
+    public State newState(String name) {  
+        this.stateNames.add(name);
         State state=new State(this.numberOfStates++);
         this.markers.add(null);
         this.transitions.add(this.factory.empty());
         return state;
     };
-    /** Создает новое состояние, сохраняя для отладки информацию о предках */
-    public State newState(Collection<State> states) {  
-        State state=this.newState();
-        if(this.parentStates==null) this.parentStates=new ArrayList();
-        while(this.parentStates.size()<state.getId()) this.parentStates.add(new HashSet());
-        this.parentStates.add(new HashSet(states));
-        return state;
-    };
+    /** Новое состояние с именем из имен предков */
+    public State newState(Collection<State> states, FSA<T,F,P> parent) {  
+        StringBuilder sb=new StringBuilder();
+        sb.append(String.format("%d(",this.numberOfStates));
+        boolean first=true;
+        for(State state: states) {
+            if(first) { first=false; } else { sb.append(","); };
+            sb.append(parent.stateNames.get(state));
+        };
+        sb.append(")");
+        return this.newState(sb.toString());
+    }
     public void newTransition(State from, State to, P label) throws IllegalArgumentException {
         if(label==null) throw new IllegalArgumentException("Epsilon(null) transition");
         this.transitions.get(from.getId()).put(label, to);
@@ -181,15 +191,8 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     @Override public String toString() { 
         StringBuilder result=new StringBuilder();
         for(int n=0; n<this.transitions.size(); n++) {
-            result.append(String.format("#%d", n));
-            if(this.parentStates!=null) {
-                result.append("(");
-                boolean first=true;
-                for(State state: this.parentStates.get(n))
-                    if(first) { first=false; result.append(String.format("%d",state.getId())); }
-                    else result.append(String.format(",%d",state.getId()));
-                result.append(")");
-            };
+            result.append("#");
+            result.append(this.stateNames.get(n));
             F marker=this.markers.get(n);
             if(marker!=null) result.append(String.format(":%s", marker));
             result.append(":");
@@ -207,7 +210,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     protected int numberOfStates;
     protected List<IPredicateMap<P,T,State,?>> transitions;
     protected List<F> markers;
-    protected List<Collection<State>> parentStates;
+    protected List<String> stateNames;
     protected IPredicateMap<P,T,State,?> factory;
 }
 

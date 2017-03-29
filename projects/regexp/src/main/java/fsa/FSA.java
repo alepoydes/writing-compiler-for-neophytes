@@ -112,6 +112,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
         this.activeStates=new HashSet();
         this.transitions=new HashMap();
         this.markers=new HashMap();
+        this.stateNames=new HashMap();
         numberOfStates=0;
         this.reset();
     };
@@ -119,7 +120,11 @@ public class FSA<T,F,P> implements IFSA<T,F> {
      * Создает новое состояние и возвращает его номер.
      */
     public State newState() {  
+        return this.newState(String.format("%d",this.numberOfStates));
+    };
+    public State newState(String name) {  
         State state=new State(this.numberOfStates++);
+        this.stateNames.put(state, name);
         if(state.getId()==0) this.activeStates.add(state);
         this.transitions.put(state, this.factory.empty());
         this.markers.put(state, new HashSet());
@@ -171,7 +176,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     @Override public String toString() { 
         StringBuilder result=new StringBuilder();
         for(State state: this.transitions.keySet()) {
-            result.append(String.format("#%d", state.getId()));
+            result.append(this.stateNames.get(state));
             boolean isFirst=true;
             for(F marker: this.markers.get(state))
                 if(isFirst) { result.append(String.format(":%s", marker)); isFirst=false; }
@@ -208,4 +213,6 @@ public class FSA<T,F,P> implements IFSA<T,F> {
      * Конструктор хранилищ для transitions.
      */
     protected IPredicateMultiMap<P,T,State,?> factory;
+    /** Названия состояний. Используется только для вывода. */
+    protected Map<State,String> stateNames;
 };
