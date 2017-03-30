@@ -176,6 +176,7 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     @Override public String toString() { 
         StringBuilder result=new StringBuilder();
         for(State state: this.transitions.keySet()) {
+            result.append("#");
             result.append(this.stateNames.get(state));
             boolean isFirst=true;
             for(F marker: this.markers.get(state))

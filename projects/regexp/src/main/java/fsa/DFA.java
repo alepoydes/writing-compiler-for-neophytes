@@ -25,8 +25,8 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     /** Конструктор пустого автомата*/
     public<M extends IPredicateMap<P,T,State,M>> DFA(M factory) {
         this.factory=factory;
-        this.transitions=new ArrayList<IPredicateMap<P,T,State,?>>();
-        this.markers=new ArrayList<F>();
+        this.transitions=new ArrayList();
+        this.markers=new ArrayList();
         this.numberOfStates=0;
         this.stateNames=new ArrayList();
         this.reset();
@@ -56,16 +56,8 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
             automaton.setActiveStates(old_states);
             Map<P,Set<State>> old_transitions=DFA.purifyTransitions(automaton.getActiveTransitions());
             // Маркируем остановочные состояния
-            Iterator<F> markers=automaton.getMarkers().iterator();
-            if(markers.hasNext()) {
-                F mark=markers.next();
+            for(F mark: automaton.getMarkers())
                 this.markState(active, mark);
-                if(markers.hasNext()) {
-                    System.out.print(String.format("Conflicting markers %s,%s,.. for states", mark, markers.next()));
-                    for(State state: old_states) System.out.print(String.format(" %s", state.getId()));
-                    System.out.println(".");
-                };
-            };
             // Для каждого символа перехода
             for(Map.Entry<P,Set<State>> entry: old_transitions.entrySet()) {
                 // Ищем куда ведет переход
@@ -145,14 +137,12 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         return true;
     };
     public F getMarker() {
-        if(this.numberOfStates==0) return null;
-        return this.markers.get(this.activeState);
+        Set<F> markers=this.markers.get(this.activeState);
+        if(markers.isEmpty()) return null;
+        return markers.iterator().next();
     };
     public Iterable<F> getMarkers() {
-        F marker=this.getMarker();
-        List<F> result=new ArrayList();
-        if(marker!=null) result.add(marker);
-        return result;
+        return this.markers.get(this.activeState);
     }
     /** Методы доступа к внутреннему состоянию */
     public State getActiveState() { return new State(this.activeState); }
@@ -164,7 +154,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     public State newState(String name) {  
         this.stateNames.add(name);
         State state=new State(this.numberOfStates++);
-        this.markers.add(null);
+        this.markers.add(new HashSet());
         this.transitions.add(this.factory.empty());
         return state;
     };
@@ -185,7 +175,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         this.transitions.get(from.getId()).put(label, to);
     };
     public void markState(State state, F mark) {
-        this.markers.set(state.getId(),mark);
+        this.markers.get(state.getId()).add(mark);
     };
     /** Методы Object */
     @Override public String toString() { 
@@ -193,8 +183,15 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         for(int n=0; n<this.transitions.size(); n++) {
             result.append("#");
             result.append(this.stateNames.get(n));
-            F marker=this.markers.get(n);
-            if(marker!=null) result.append(String.format(":%s", marker));
+            Set<F> markers=this.markers.get(n);
+            if(!markers.isEmpty()) {
+                boolean first=true;
+                for(F marker: markers)
+                    if(first) {
+                        first=false;
+                        result.append(String.format(":%s", marker));
+                    } else result.append(String.format(" %s", marker));
+            };
             result.append(":");
             for(Map.Entry<P,State> entry: this.transitions.get(n).entrySet()) {
                 P symbol=entry.getKey();
@@ -209,7 +206,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     protected int activeState;
     protected int numberOfStates;
     protected List<IPredicateMap<P,T,State,?>> transitions;
-    protected List<F> markers;
+    protected List<Set<F>> markers;
     protected List<String> stateNames;
     protected IPredicateMap<P,T,State,?> factory;
 }
