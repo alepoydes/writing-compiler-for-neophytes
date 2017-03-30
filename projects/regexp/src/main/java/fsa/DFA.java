@@ -29,17 +29,13 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         this.markers=new ArrayList();
         this.numberOfStates=0;
         this.stateNames=new ArrayList();
-        this.reset();
     };
     /** Конструктор, строящий детерминированный автомат из недетерминированного.
      */
     public<M extends IPredicateMap<P,T,State,M>> DFA(M factory, FSA<T,F,P> automaton) {
         this(factory);
-        // Сохраняем состояние автомата, чтобы потом его восстановить
-        Collection<State> automaton_pre=new HashSet(automaton.getActiveStates());
         // Перезапускаем автомат и сохраняем стартовое состояние
-        automaton.reset();
-        Set<State> old_initial=new HashSet(automaton.getActiveStates());
+        Set<State> old_initial=automaton.initialState();
         // Создаем отображение старых состояний на новые
         Map<Set<State>,State> old2new=new HashMap();
         State new_initial=this.newState(old_initial,automaton);
@@ -53,10 +49,9 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
             State active=old2new.get(old_states);
             // и делаем из состояния active все переходы.
             // Получаем все возможные символы для перехода.
-            automaton.setActiveStates(old_states);
-            Map<P,Set<State>> old_transitions=DFA.purifyTransitions(automaton.getActiveTransitions());
+            Map<P,Set<State>> old_transitions=DFA.purifyTransitions(automaton.getTransitions(old_states));
             // Маркируем остановочные состояния
-            for(F mark: automaton.getMarkers())
+            for(F mark: automaton.getMarkers(old_states))
                 this.markState(active, mark);
             // Для каждого символа перехода
             for(Map.Entry<P,Set<State>> entry: old_transitions.entrySet()) {
@@ -75,8 +70,6 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
                 this.newTransition(active,target,entry.getKey());
             };
         };
-        // Восстанавливаем начальное состояние
-        automaton.setActiveStates(automaton_pre);
     }
     /** 
      * Составляет карту переходов, такую что ключи не имеют пересечений.
@@ -126,26 +119,17 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     }
     /** По данной таблице переходов строит эквивалентную, в которой символы переходов не пересекаются */
     /** Реализация интерфейся IDFA */
-    public void reset() {
-        this.activeState=0;
+    public State initialState() {
+        return new State(0);
     };
-    public boolean makeTransition(T label) {
-        if(this.numberOfStates==0) return false;
-        State state=this.transitions.get(this.activeState).get(label);
-        if(state==null) return false;
-        this.activeState=state.getId();
-        return true;
+    public State makeTransition(State activeState, T label) {
+        if(this.numberOfStates==0) return null;
+        State state=this.transitions.get(activeState.getId()).get(label);
+        return state;
     };
-    public F getMarker() {
-        Set<F> markers=this.markers.get(this.activeState);
-        if(markers.isEmpty()) return null;
-        return markers.iterator().next();
-    };
-    public Iterable<F> getMarkers() {
-        return this.markers.get(this.activeState);
+    public Set<F> getMarkers(State activeState) {
+        return this.markers.get(activeState.getId());
     }
-    /** Методы доступа к внутреннему состоянию */
-    public State getActiveState() { return new State(this.activeState); }
     /** Методы конструирования автомата */
     public State newState() {  
         return this.newState(String.format("%d",this.numberOfStates));
@@ -203,7 +187,6 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
         return result.toString();
     };
     /** Реализиция */
-    protected int activeState;
     protected int numberOfStates;
     protected List<IPredicateMap<P,T,State,?>> transitions;
     protected List<Set<F>> markers;

@@ -20,12 +20,11 @@ import java.util.Optional;
  */
 public class FSA<T,F,P> implements IFSA<T,F> {
     // Реализация интерфейся IFSA
-    public void reset() {
-        this.activeStates.clear();
-        if(this.numberOfStates>0) {
-            this.activeStates.add(new State(0));
-            this.doEpsilonTransition(this.activeStates);
-        };
+    public Set<State> initialState() {
+        Set<State> activeStates=new HashSet();
+        if(this.numberOfStates>0) activeStates.add(new State(0));
+        this.doEpsilonTransition(activeStates);
+        return activeStates;
     };
     /** 
      * Дополняет набор состояний states всеми состояниями, 
@@ -42,54 +41,39 @@ public class FSA<T,F,P> implements IFSA<T,F> {
             suspects=nextSuspects;
         };
     };
-    public boolean makeTransition(T label) {
+    public Set<State> makeTransition(Set<State> activeStates, T label) {
         HashSet<State> next=new HashSet(); // Следующий набор активных состояний
         // делаем переходы по символу
-        for(State from: this.activeStates) 
+        for(State from: activeStates) 
             for(State to: this.transitions.get(from).get(label))
                 next.add(to);
         // делаем эпсилон переходы
         this.doEpsilonTransition(next);
         // проверяем, был ли хоть один переход
-        if(next.isEmpty()) return false;
-        this.activeStates=next;
-        return true;
+        if(next.isEmpty()) return null;
+        return next;
     };
-    public Iterable<F> getMarkers() {
+    public Set<F> getMarkers(Set<State> activeStates) {
         HashSet<F> markers=new HashSet();
-        for(State state: this.activeStates)
+        for(State state: activeStates)
             for(F marker: this.markers.get(state)) 
                 markers.add(marker);
         return markers;
     };
     // Оригинальные методы
     /**
-     * Возвращает все достигнутые к настоящему моменту состояния.
-     * Стартовое состояние всегда 0.
-     */
-    public Collection<State> getActiveStates() {
-        return this.activeStates;
-    };
-    /**
-     * Переходит в указанное состояние
-     */
-    public void setActiveStates(Collection<State> states) {
-        this.activeStates=new HashSet(states);
-        this.doEpsilonTransition(this.activeStates);
-    }
-    /**
      * Возвращает все переходы
      */
-    public IPredicateMultiMap<P,T,State,?> getActiveTransitions() {
+    public IPredicateMultiMap<P,T,State,?> getTransitions(Set<State> activeStates) {
         IPredicateMultiMap<P,T,State,?> result=this.factory.empty();
-        for(State state: this.activeStates)
+        for(State state: activeStates)
             result.mergeMap(this.transitions.get(state), (x) -> x);
         return result;
     }
     /**
      * Возвразает все остановчные состояния.
      */
-    public Iterable<State> getMarked() {
+    public Set<State> getMarked() {
         HashSet<State> result=new HashSet();
         for(Map.Entry<State,HashSet<F>> entry: this.markers.entrySet())
             if(!entry.getValue().isEmpty())
@@ -109,12 +93,10 @@ public class FSA<T,F,P> implements IFSA<T,F> {
      */
     public<M extends IPredicateMultiMap<P,T,State,M>> FSA(M factory) {
         this.factory=factory;
-        this.activeStates=new HashSet();
         this.transitions=new HashMap();
         this.markers=new HashMap();
         this.stateNames=new HashMap();
         numberOfStates=0;
-        this.reset();
     };
     /**
      * Создает новое состояние и возвращает его номер.
@@ -125,7 +107,6 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     public State newState(String name) {  
         State state=new State(this.numberOfStates++);
         this.stateNames.put(state, name);
-        if(state.getId()==0) this.activeStates.add(state);
         this.transitions.put(state, this.factory.empty());
         this.markers.put(state, new HashSet());
         return state;
@@ -133,10 +114,11 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     /**
      * Создает переход между состояниями по данному символу.
      * Метка label=null соответствует эпсилон переходу.
+     * Добавление эпсилон перехода может изменить текущее состояние,
+     * не забудьте вызвать doEpsilonTransitions после newTransition.
      */
     public void newTransition(State from, State to, P label) {
         this.transitions.get(from).put(label, to);
-        if(label==null) this.doEpsilonTransition(this.activeStates);
     };
     /**
      * Помечает состояние остановочным, маркируя его с помощью marker.
@@ -155,9 +137,6 @@ public class FSA<T,F,P> implements IFSA<T,F> {
         // Добавляем все состояния
         State first=this.newState();
         for(int n=1; n<automaton.numberOfStates; n++) this.newState();
-        // Добавляем активные состояния из присоединяемого автомата.
-        for(State state: automaton.activeStates) 
-            this.activeStates.add(new State(first.getId()+state.getId()));
         // Добавляем переходы
         for(Map.Entry<State,IPredicateMultiMap<P,T,State,?>> entry: automaton.transitions.entrySet())
             this.transitions.get(new State(entry.getKey().getId()+first.getId()))
@@ -193,10 +172,6 @@ public class FSA<T,F,P> implements IFSA<T,F> {
         return result.toString();
     };
     // Детали реализации
-    /**
-     * Перечень всех достигнутых к настоящему моменту состояний.
-     */
-    protected HashSet<State> activeStates; 
     /**
      * Число использованных состояний.
      * Автомат обязан иметь все состояния с номерами от 0 до numberOfStates-1.

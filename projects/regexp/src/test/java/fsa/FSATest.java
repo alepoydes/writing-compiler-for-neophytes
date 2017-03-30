@@ -4,6 +4,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Set;
 
 public class FSATest {
     
@@ -19,20 +20,23 @@ public class FSATest {
     }
     @Test public void testActiveStatesInitialization() {
         SimpleFSA<Integer,Integer> automaton = new SimpleFSA();
-        assertEquals("automaton without states has to have no active states.", new HashSet(), automaton.getActiveStates());
+        Set<State> state=automaton.initialState();
+        assertEquals("automaton without states has to have no active states.", new HashSet(), state);
         State start=automaton.newState();
-        assertEquals("Initial active state is not the first state created.", new HashSet(Arrays.asList(start)), automaton.getActiveStates());
+        state=automaton.initialState();
+        assertEquals("Initial active state is not the first state created.", new HashSet(Arrays.asList(start)), state);
     };
     @Test public void testTransitions() {
         SimpleFSA<Integer,Integer> automaton = new SimpleFSA();
         State start=automaton.newState();
         State second=automaton.newState();
         automaton.newTransition(start, second, 0);
-        assertEquals("Wrong initial state.", new HashSet(Arrays.asList(start)), automaton.getActiveStates());
-        assertTrue("Transition is skipped.", automaton.makeTransition(0));
-        assertEquals("Wrong transition.", new HashSet(Arrays.asList(second)), automaton.getActiveStates());
-        assertFalse("Forbidden transition.", automaton.makeTransition(0));
-        assertEquals("State is changed without transition.", new HashSet(Arrays.asList(second)), automaton.getActiveStates());
+        Set<State> state=automaton.initialState();
+        assertEquals("Wrong initial state.", new HashSet(Arrays.asList(start)), state);
+        state=automaton.makeTransition(state,0);
+        assertNotNull("Transition is skipped.", state);
+        assertEquals("Wrong transition.", new HashSet(Arrays.asList(second)), state);
+        assertNull("Forbidden transition.", automaton.makeTransition(state,0));
     };
     @Test public void testNonDeterministicTransitions() {
         SimpleFSA<Integer,Integer> automaton = new SimpleFSA();
@@ -41,15 +45,18 @@ public class FSATest {
         automaton.newTransition(start, second, 0);
         automaton.newTransition(start, start, 0);
         automaton.newTransition(second, start, 1);
-        assertEquals("Wrong initial state.", new HashSet(Arrays.asList(start)), automaton.getActiveStates());
-        assertTrue("Transition is skipped.", automaton.makeTransition(0));
-        assertEquals("Wrong transition.", new HashSet(Arrays.asList(start, second)), automaton.getActiveStates());
-        assertTrue("Transition is skipped.", automaton.makeTransition(0));
-        assertEquals("Wrong transition.", new HashSet(Arrays.asList(start, second)), automaton.getActiveStates());
-        assertTrue("Transition is skipped.", automaton.makeTransition(1));
-        assertEquals("Wrong transition.", new HashSet(Arrays.asList(start)), automaton.getActiveStates());
-        assertFalse("forbidden transition.", automaton.makeTransition(1));
-        assertEquals("State is changed without transition.", new HashSet(Arrays.asList(start)), automaton.getActiveStates());        
+        Set<State> state=automaton.initialState();
+        assertEquals("Wrong initial state.", new HashSet(Arrays.asList(start)), state);
+        state=automaton.makeTransition(state,0);
+        assertNotNull("Transition is skipped.", state);
+        assertEquals("Wrong transition.", new HashSet(Arrays.asList(start, second)), state);
+        state=automaton.makeTransition(state,0);
+        assertNotNull("Transition is skipped.", state);
+        assertEquals("Wrong transition.", new HashSet(Arrays.asList(start, second)), state);
+        state=automaton.makeTransition(state,1);
+        assertNotNull("Transition is skipped.", state);
+        assertEquals("Wrong transition.", new HashSet(Arrays.asList(start)), state);
+        assertNull("forbidden transition.", automaton.makeTransition(state,1));
     };
     @Test public void testTerminalMarks() {
         SimpleFSA<Integer,Integer> automaton = new SimpleFSA();
@@ -61,29 +68,35 @@ public class FSATest {
         automaton.markState(start, 0);
         automaton.markState(third, 1);
         automaton.markState(third, 2);
-        assertEquals("Wrong markers.", new HashSet(Arrays.asList(0)), automaton.getMarkers());
-        assertTrue(automaton.makeTransition(0));
-        assertEquals("Wrong markers.", new HashSet(Arrays.asList()), automaton.getMarkers());
-        assertTrue(automaton.makeTransition(0));
-        assertEquals("Wrong markers.", new HashSet(Arrays.asList(1,2)), automaton.getMarkers());
+        Set<State> state=automaton.initialState();
+        assertEquals("Wrong markers.", new HashSet(Arrays.asList(0)), automaton.getMarkers(state));
+        state=automaton.makeTransition(state,0);
+        assertNotNull(state);
+        assertEquals("Wrong markers.", new HashSet(Arrays.asList()), automaton.getMarkers(state));
+        state=automaton.makeTransition(state,0);
+        assertNotNull(state);
+        assertEquals("Wrong markers.", new HashSet(Arrays.asList(1,2)), automaton.getMarkers(state));
     };
     @Test public void testEpsilonTransitions() {
         SimpleFSA<Integer,Integer> automaton = new SimpleFSA();
         State start=automaton.newState();
         automaton.newTransition(start, start, null); // проаерка на бесконечный цикл
-        assertEquals("Wrong initial active states", new HashSet(Arrays.asList(start)), automaton.getActiveStates());
+        assertEquals("Wrong initial active states", new HashSet(Arrays.asList(start)), automaton.initialState());
         State second=automaton.newState();
-        assertEquals(new HashSet(Arrays.asList(start)), automaton.getActiveStates());
+        assertEquals(new HashSet(Arrays.asList(start)), automaton.initialState());
         automaton.newTransition(start, second, null);
-        assertEquals("No epsilon-transitions on newTransition", new HashSet(Arrays.asList(start, second)), automaton.getActiveStates());
+        assertEquals("No epsilon-transitions on newTransition", new HashSet(Arrays.asList(start, second)), automaton.initialState());
         State third=automaton.newState();
         automaton.newTransition(second, third, 0);
-        assertEquals(new HashSet(Arrays.asList(start, second)), automaton.getActiveStates());
-        assertTrue(automaton.makeTransition(0));
-        assertEquals(new HashSet(Arrays.asList(third)), automaton.getActiveStates());
+        Set<State> state=automaton.initialState();
+        assertEquals(new HashSet(Arrays.asList(start, second)), state);
+        state=automaton.makeTransition(state,0);
+        assertNotNull(state);
+        assertEquals(new HashSet(Arrays.asList(third)), state);
         automaton.newTransition(third,start,0);
         automaton.newTransition(second,third,null);
-        assertTrue(automaton.makeTransition(0));
-        assertEquals(new HashSet(Arrays.asList(start, second, third)), automaton.getActiveStates());
+        state=automaton.makeTransition(state,0);
+        assertNotNull(state);
+        assertEquals(new HashSet(Arrays.asList(start, second, third)), state);
     };
 }

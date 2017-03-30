@@ -22,9 +22,10 @@ public class DFATest {
     }
     @Test public void testActiveStatesInitialization() {
         DFA<UChar,Integer,UChar> automaton = new DFA(new KeyPredicateMap());
-        assertEquals("automaton without states has to have 0 active state.", 0, automaton.activeState);
-        State start=automaton.newState();
-        assertEquals("Initial active state is not the first state created.", 0, automaton.activeState);
+        State state=automaton.initialState();
+        assertEquals("automaton without states has to have 0 active state.", 0, state.getId());
+        state=automaton.newState();
+        assertEquals("Initial active state is not the first state created.", 0, state.getId());
     };
     @Test public void testTransitions() {
         DFA<UChar,Integer,UChar> automaton = new DFA(new KeyPredicateMap());
@@ -32,11 +33,12 @@ public class DFATest {
         State first=automaton.newState();
         UChar a=new UChar('a');
         automaton.newTransition(start, first, a);
-        assertEquals("Wrong initial state.", start, automaton.getActiveState());
-        assertTrue("Transition is skipped.", automaton.makeTransition(a));
-        assertEquals("Wrong transition.", first, automaton.getActiveState());
-        assertFalse("Forbidden transition.", automaton.makeTransition(a));
-        assertEquals("State is changed without transition.", first, automaton.getActiveState());
+        State state=automaton.initialState();
+        assertEquals("Wrong initial state.", start, state);
+        state=automaton.makeTransition(state, a);
+        assertNotNull("Transition is skipped.", state);
+        assertEquals("Wrong transition.", first, state);
+        assertNull("Forbidden transition.", automaton.makeTransition(state, a));
     };
     @Test public void testTerminalMarks() {
         DFA<UChar,Integer,UChar> automaton = new DFA(new KeyPredicateMap());
@@ -48,11 +50,16 @@ public class DFATest {
         automaton.newTransition(first, second, a);
         automaton.markState(start, 0);
         automaton.markState(second, 1);
-        assertEquals("Wrong markers.", new Integer(0), automaton.getMarker());
-        assertTrue(automaton.makeTransition(a));
-        assertEquals("Wrong markers.", null, automaton.getMarker());
-        assertTrue(automaton.makeTransition(a));
-        assertEquals("Wrong markers.", new Integer(1), automaton.getMarker());
+        State state=automaton.initialState();
+        assertEquals("Wrong markers.", new Integer(0), automaton.getMarker(state));
+        state=automaton.makeTransition(state, a);
+        assertNotNull(state);
+        assertEquals("Wrong markers.", null, automaton.getMarker(state));
+        assertEquals("Wrong markers.", new HashSet(), automaton.getMarkers(state));
+        state=automaton.makeTransition(state, a);
+        assertNotNull(state);
+        assertEquals("Wrong markers.", new Integer(1), automaton.getMarker(state));
+        assertEquals("Wrong markers.", new HashSet(Arrays.asList(new Integer(1))), automaton.getMarkers(state));
     };
     @Test public void testFromFSA() {
         FSA<UChar,Integer,UChar> automaton = new FSA(new KeyPredicateMultiMap());
@@ -86,36 +93,31 @@ public class DFATest {
         #3(1): 'a'>1           // s3
         */
         // initial: start,first
-        State s0=dfa.getActiveState();
-        assertEquals((Integer)0,dfa.getMarker());
-        assertTrue(dfa.makeTransition(a));
+        State s0=dfa.initialState();
+        assertEquals((Integer)0,dfa.getMarker(s0));
         // after transition: second,first
-        State s1=dfa.getActiveState();
-        assertEquals(null,dfa.getMarker());
+        State s1=dfa.makeTransition(s0,a);
+        assertNotNull(s1);
+        assertEquals(null,dfa.getMarker(s1));
         assertTrue(s0!=s1);
-        assertTrue(dfa.makeTransition(a));
         // start,first,second
-        State s2=dfa.getActiveState();
-        assertEquals((Integer)0,dfa.getMarker());
+        State s2=dfa.makeTransition(s1,a);
+        assertEquals((Integer)0,dfa.getMarker(s2));
         assertTrue(s0!=s2); 
         assertTrue(s1!=s2);
-        assertTrue(dfa.makeTransition(a));
         // start,first,second
-        assertEquals(s2, dfa.getActiveState());
-        assertTrue(dfa.makeTransition(b));
+        assertEquals(s2, dfa.makeTransition(s2, a));
         // second,first
-        assertEquals(s1, dfa.getActiveState());
-        assertTrue(dfa.makeTransition(b));
+        assertEquals(s1, dfa.makeTransition(s2, b));
         // first        
-        State s3=dfa.getActiveState();
-        assertEquals(null,dfa.getMarker());
+        State s3=dfa.makeTransition(s1, b);
+        assertNotNull(s3);
+        assertNull(dfa.getMarker(s3));
         assertTrue(s0!=s3);
         assertTrue(s1!=s3);
         assertTrue(s2!=s3);
-        assertFalse(dfa.makeTransition(b));
-        assertEquals(s3, dfa.getActiveState());
-        assertTrue(dfa.makeTransition(a));
+        assertNull(dfa.makeTransition(s3,b));
         // second,first
-        assertEquals(s1, dfa.getActiveState());
+        assertEquals(s1, dfa.makeTransition(s3,a));
     };
 }

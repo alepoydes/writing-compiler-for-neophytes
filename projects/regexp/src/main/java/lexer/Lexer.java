@@ -29,7 +29,7 @@ public class Lexer<T,F,P> {
         this.startNewToken();
     };
     public void startNewToken() {
-        this.automaton.reset();
+        this.state=this.automaton.initialState();
         this.terminals=new LinkedList();
     };
     /**
@@ -39,17 +39,21 @@ public class Lexer<T,F,P> {
      * Если возникает ошибка разбора, выбрасывается исключение.
      */
     public LexerResult<T,F> parse_symbol(T symbol) throws LexerError {
-        if(this.automaton.makeTransition(symbol)) {
+        State nextState=this.automaton.makeTransition(this.state, symbol);
+        if(nextState!=null) {
+            this.state=nextState;
             this.terminals.add(symbol);
             return null;
         };
-        F lexeme=this.automaton.getMarker();
+        F lexeme=this.automaton.getMarker(this.state);
         if(lexeme==null) 
             throw new LexerError(String.format("Unexpected symbol '%s'", symbol.toString()));
         LexerResult<T,F> result=new LexerResult(this.terminals, lexeme);
         this.startNewToken();
-        if(!this.automaton.makeTransition(symbol)) 
+        nextState=this.automaton.makeTransition(this.state, symbol);
+        if(nextState==null) 
             throw new LexerError(String.format("Unexpected symbol '%s'", symbol.toString()));
+        this.state=nextState;
         this.terminals.add(symbol);
         return result;
     };
@@ -58,7 +62,7 @@ public class Lexer<T,F,P> {
      * Выбрасывает исключение, если найти лексему не удалось выделить.
      */
     public LexerResult<T,F> parse_eol() throws LexerError {
-        F lexeme=this.automaton.getMarker();
+        F lexeme=this.automaton.getMarker(this.state);
         if(lexeme==null) throw new LexerError(String.format("Unexpected end of line"));
         LexerResult<T,F> result=new LexerResult(this.terminals, lexeme);
         return result;
@@ -80,6 +84,8 @@ public class Lexer<T,F,P> {
      * Хранилице автомата, делающего всю работу
      */
     private IDFA<T,F> automaton;
+    /** Текущее состояние автомата. */
+    private State state;
     /**
      * Хранилице подстроки, соответсвующей текущей лексеме
      */
