@@ -155,8 +155,9 @@ public class FSA<T,F,P> implements IFSA<T,F> {
     @Override public String toString() { 
         StringBuilder result=new StringBuilder();
         for(State state: this.transitions.keySet()) {
-            result.append("#");
+            result.append(String.format("#%d(",state.getId()));
             result.append(this.stateNames.get(state));
+            result.append(")");
             boolean isFirst=true;
             for(F marker: this.markers.get(state))
                 if(isFirst) { result.append(String.format(":%s", marker)); isFirst=false; }
@@ -164,8 +165,8 @@ public class FSA<T,F,P> implements IFSA<T,F> {
             result.append(":");
             for(Map.Entry<P,State> entry: this.transitions.get(state).entrySet()) {
                 P symbol=entry.getKey();
-                if(symbol!=null) result.append(String.format(" '%s'>%d", symbol, entry.getValue().getId()));
-                else result.append(String.format(" eps>%d", entry.getValue().getId()));
+                if(symbol!=null) result.append(String.format(" %s→%d", symbol, entry.getValue().getId()));
+                else result.append(String.format(" ε→%d", entry.getValue().getId()));
             };
             result.append("\n");
         };

@@ -10,5 +10,5 @@ public class Nonterminal {
     public String getName() { return this.name; }
     /** хранилище для номера */
     private String name;
-    @Override public String toString() { return String.format("<%s>",this.name); };
+    @Override public String toString() { return String.format("◂%s▸",this.name); };
 };

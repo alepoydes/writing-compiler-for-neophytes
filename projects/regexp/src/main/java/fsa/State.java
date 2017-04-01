@@ -13,12 +13,9 @@ public class State {
      public int getId() { return this.id; }
      /** хранилище для номера */
      private int id;
-     @Override 
-     public int	hashCode() { return this.id; }
-     @Override
-     public String toString() { return String.valueOf(this.id); };
-     @Override
-     public boolean equals(Object obj) { 
+     @Override public int hashCode() { return this.id; }
+     @Override public String toString() { return String.valueOf(this.id); };
+     @Override public boolean equals(Object obj) { 
         if(obj==null) return false;
         if(this.getClass()!=obj.getClass()) return false;
         State state=(State)obj;

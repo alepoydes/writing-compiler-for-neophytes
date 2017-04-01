@@ -179,8 +179,8 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
             result.append(":");
             for(Map.Entry<P,State> entry: this.transitions.get(n).entrySet()) {
                 P symbol=entry.getKey();
-                if(symbol!=null) result.append(String.format(" '%s'>%d", symbol, entry.getValue().getId()));
-                else result.append(String.format(" eps>%d", entry.getValue().getId()));
+                if(symbol!=null) result.append(String.format(" %s→%d", symbol, entry.getValue().getId()));
+                else result.append(String.format(" ε→%d", entry.getValue().getId()));
             };
             result.append("\n");
         };
