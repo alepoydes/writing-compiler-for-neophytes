@@ -5,6 +5,7 @@ import wcn.terminal.*;
 import java.util.List;
 import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /** 
  * Класс для представления переходов в LR автомате с предпросмотром.
@@ -16,6 +17,22 @@ public class Lookahead<T> implements ICharSet<Term<T>,Lookahead<T>> {
         this.symbol=symbol;
         this.lookahead=lookahead;
     };
+    public Lookahead(T symbol, List<T> lookahead) {
+        this(new Term(symbol), lookahead);
+    };
+    public Lookahead(Nonterminal symbol, List<T> lookahead) {
+        this(new Term(symbol), lookahead);
+    };
+    public Lookahead(Term<T> symbol, T... lookahead) {
+        this(symbol, Arrays.asList(lookahead));
+    };
+    public Lookahead(T symbol, T... lookahead) {
+        this(new Term(symbol), lookahead);
+    };
+    public Lookahead(Nonterminal symbol, T... lookahead) {
+        this(new Term(symbol), lookahead);
+    };
+
     // Интерфейс ICharSet
     public Lookahead<T> intersect(Lookahead<T> other) {
         return (this.equals(other))?this:null;

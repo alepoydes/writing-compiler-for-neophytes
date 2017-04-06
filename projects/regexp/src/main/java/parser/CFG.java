@@ -130,12 +130,12 @@ public class CFG<T> {
         return result;
     };
     /** Возвращает автомат LR(depth), где depth - число символов для предпросмотра. */
-    public IDFA<Lookahead<T>, RHS<T>> generateLRdet(int depth) {
+    public IDFA<Lookahead<T>, Rule<T>> generateLRdet(int depth) {
         return new DFA(new KeyPredicateMap(), generateLR(depth));
     }
-    public FSA<Lookahead<T>, RHS<T>, Lookahead<T>> generateLR(int depth) {
+    public FSA<Lookahead<T>, Rule<T>, Lookahead<T>> generateLR(int depth) {
         if(this.startSymbol==null) return null;
-        FSA<Lookahead<T>,RHS<T>,Lookahead<T>> fsa=new FSA(new KeyPredicateMultiMap());
+        FSA<Lookahead<T>,Rule<T>,Lookahead<T>> fsa=new FSA(new KeyPredicateMultiMap());
         // Перечень станций = всех нетерминалов с предпросмотрами (правая часть правила отброшена = null)
         Map<Rule<T>, State> stations=new HashMap();
         // Перечень всех необработанных станций
@@ -157,7 +157,7 @@ public class CFG<T> {
             // правой частью, соответствующей станции.
             for(RHS<T> rhs: this.rules.get(station.lhs)) {
                 // Первое правило цепочки
-                Rule<T> head=new Rule(rhs, station.lhs, station.lookahead);
+                Rule<T> head=new Rule(rhs, station.lookahead);
                 State head_state=fsa.newState(head.toString());
                 // Добавляем переход из станции в цепочку
                 fsa.newTransition(station_state, head_state, null);
@@ -196,7 +196,7 @@ public class CFG<T> {
                     head_state=next_state;
                 };
                 // Последнее состояния является остановочным, добавляем маркер
-                fsa.markState(head_state, rhs);
+                fsa.markState(head_state, head);
             };
         };
         return fsa;
@@ -205,15 +205,11 @@ public class CFG<T> {
     @Override public String toString() { 
         StringBuilder sb=new StringBuilder();
         for(Map.Entry<Nonterminal, Set<RHS<T>>> entry: this.rules.entrySet()) {
-            sb.append(entry.getKey());
-            if(entry.getKey()==this.startSymbol) sb.append("*");
-            sb.append(" ::= ");
-            boolean first=true;
             for(RHS rhs: entry.getValue()) {
-                if(first) first=false; else sb.append(" | ");
+                if(entry.getKey()==this.startSymbol) sb.append("*");
                 sb.append(rhs);
+                sb.append("\n");
             };
-            sb.append("\n");
         };
         return sb.toString(); 
     };

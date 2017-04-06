@@ -16,9 +16,9 @@ public class Rule<T> extends RHS<T> {
         this.position=position;
     }
     /** Конструктор создающий состояние без прочитанных символов. */
-    public Rule(RHS rhs, Nonterminal lhs, List<T> lookahead) {
-        this(rhs.action, lhs, rhs.symbols, 0, lookahead);
-    };
+    public Rule(RHS rhs, List<T> lookahead) {
+        this(rhs.action, rhs.lhs, rhs.symbols, 0, lookahead);
+    }
     /** Конструктор станции, т.е. состояния без правой части правила. */
     public Rule(Nonterminal lhs, List<T> lookahead) {
         this(null, lhs, null, 0, lookahead);
@@ -53,19 +53,19 @@ public class Rule<T> extends RHS<T> {
         return hash;
     }
     @Override public boolean equals(Object obj) { 
-        //System.out.println(String.format("%s<>%s",this,obj));
         if(obj==null) return false;
         if(this.getClass()!=obj.getClass()) return false;
         Rule rule=(Rule)obj;
         if(this.lookahead.size()!=rule.lookahead.size()) { return false; };
         for(int n=0; n<this.lookahead.size(); n++) 
-            if(this.lookahead.get(n)!=rule.lookahead.get(n)) { return false; };
+            if(!this.lookahead.get(n).equals(rule.lookahead.get(n))) { return false; };
         if(this.lhs!=rule.lhs) { return false; };
         if(this.symbols==null) { return rule.symbols==null; };
         if(this.symbols.size()!=rule.symbols.size()) { return false; };
         for(int n=0; n<this.symbols.size(); n++) 
-            if(this.symbols.get(n)!=rule.symbols.get(n)) { return false; };
-        return this.position==rule.position;
+            if(!this.symbols.get(n).equals(rule.symbols.get(n))) { return false; };
+        if(this.position!=rule.position) return false;
+        return true;
      };
     public List<T> lookahead;
     public int position;

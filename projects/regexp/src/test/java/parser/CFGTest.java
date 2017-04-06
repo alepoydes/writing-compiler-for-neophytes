@@ -68,7 +68,7 @@ public class CFGTest {
             Arrays.asList('b','a'))),  first.get(s));
     }
 
-    public<T> Set<RHS<T>> match(IDFA<Lookahead<T>,RHS<T>> dfa, int depth, Iterable<T> string) {
+    public<T> Set<Rule<T>> match(IDFA<Lookahead<T>,Rule<T>> dfa, int depth, Iterable<T> string) {
         // Подготавливаем depth символов для предпросмотра
         List<T> lookahead=new ArrayList();
         Iterator<T> stream=string.iterator();
@@ -117,11 +117,11 @@ public class CFGTest {
         System.out.println("First(0):");
         System.out.println(first);
 
-        FSA<Lookahead<Character>, RHS<Character>, Lookahead<Character>> fsa=cfg.generateLR(0);
+        FSA<Lookahead<Character>, Rule<Character>, Lookahead<Character>> fsa=cfg.generateLR(0);
         System.out.println("\nLR(0):");
         System.out.println(fsa);
 
-        IDFA<Lookahead<Character>, RHS<Character>> dfa0=cfg.generateLRdet(0);
+        IDFA<Lookahead<Character>, Rule<Character>> dfa0=cfg.generateLRdet(0);
         System.out.println("LR(0):");
         System.out.println(dfa0);
 
@@ -133,21 +133,26 @@ public class CFGTest {
         System.out.println("\nLR(1):");
         System.out.println(fsa);
 
-        IDFA<Lookahead<Character>, RHS<Character>> dfa1=cfg.generateLRdet(1);
+        IDFA<Lookahead<Character>, Rule<Character>> dfa1=cfg.generateLRdet(1);
         System.out.println("LR(1):");
         System.out.println(dfa1);
 
         List<Character> string=Arrays.asList();
-        assertEquals(new HashSet(Arrays.asList(s2)), this.match(dfa0, 0, string));
-        assertEquals(new HashSet(Arrays.asList(s2)), this.match(dfa1, 1, string));
+        Rule<Character> rule=new Rule(s2, Arrays.asList()); rule.position=rule.symbols.size();
+        assertEquals(new HashSet(Arrays.asList(rule)), this.match(dfa0, 0, string));
+        assertEquals(new HashSet(Arrays.asList(rule)), this.match(dfa1, 1, string));
 
-        assertEquals(new HashSet(Arrays.asList(a1)), this.match(dfa0, 0, Arrays.asList('b')));
-        assertEquals(new HashSet(Arrays.asList(a1)), this.match(dfa1, 1, Arrays.asList('b','a')));
+        rule=new Rule(a1, Arrays.asList()); rule.position=rule.symbols.size();
+        assertEquals(new HashSet(Arrays.asList(rule)), this.match(dfa0, 0, Arrays.asList('b')));
+        rule=new Rule(a1, Arrays.asList('a')); rule.position=rule.symbols.size();
+        assertEquals(new HashSet(Arrays.asList(rule)), this.match(dfa1, 1, Arrays.asList('b','a')));
 
         assertEquals(null, this.match(dfa0, 0, Arrays.asList('c')));
         assertEquals(null, this.match(dfa1, 1, Arrays.asList('c','a')));
 
-        assertEquals(new HashSet(Arrays.asList(a1)), this.match(dfa0, 0, Arrays.asList('d','b')));
-        assertEquals(new HashSet(Arrays.asList(a1)), this.match(dfa1, 1, Arrays.asList('d','b','c')));
+        rule=new Rule(a1, Arrays.asList()); rule.position=rule.symbols.size();
+        assertEquals(new HashSet(Arrays.asList(rule)), this.match(dfa0, 0, Arrays.asList('d','b')));
+        rule=new Rule(a1, Arrays.asList('c')); rule.position=rule.symbols.size();
+        assertEquals(new HashSet(Arrays.asList(rule)), this.match(dfa1, 1, Arrays.asList('d','b','c')));
     }
 }
