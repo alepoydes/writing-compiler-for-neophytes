@@ -44,5 +44,46 @@ public class RegExpTest {
         assertFalse(regexp.match(""));
         assertFalse(regexp.match("baba"));
     }    
+    @Test public void testStar() throws ParserError {
+        RegExp regexp=new RegExp("b(ab)*");
+        assertTrue(regexp.match("bab"));
+        assertTrue(regexp.match("b"));
+        assertTrue(regexp.match("babab"));
+        assertFalse(regexp.match("ba"));
+        assertFalse(regexp.match(""));
+        assertFalse(regexp.match("baba"));
+    }    
+    @Test public void testStarAlt() throws ParserError {
+        RegExp regexp=new RegExp("b(ab)+?");
+        assertTrue(regexp.match("bab"));
+        assertTrue(regexp.match("b"));
+        assertTrue(regexp.match("babab"));
+        assertFalse(regexp.match("ba"));
+        assertFalse(regexp.match(""));
+        assertFalse(regexp.match("baba"));
+    }    
+    @Test public void testPlus() throws ParserError {
+        RegExp regexp=new RegExp("b(ab)+");
+        assertTrue(regexp.match("bab"));
+        assertFalse(regexp.match("b"));
+        assertTrue(regexp.match("babab"));
+        assertFalse(regexp.match("ba"));
+        assertFalse(regexp.match(""));
+        assertFalse(regexp.match("baba"));
+    }
+    @Test public void testUnion() throws ParserError {
+        RegExp regexp=new RegExp("(aa|b)+");
+        assertTrue(regexp.match("aa"));
+        assertTrue(regexp.match("b"));
+        assertTrue(regexp.match("baa"));
+        assertTrue(regexp.match("aab"));
+        assertTrue(regexp.match("aabaa"));
+        assertTrue(regexp.match("aaaa"));
+        assertFalse(regexp.match("aaa"));
+        assertFalse(regexp.match(""));
+        assertFalse(regexp.match("a"));        
+        assertFalse(regexp.match("ba"));
+    }
     
+
 }

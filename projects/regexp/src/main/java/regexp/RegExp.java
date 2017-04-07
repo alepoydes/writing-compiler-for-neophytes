@@ -39,7 +39,7 @@ public class RegExp {
         cfg.appendRule((x)->x[0], regexp, group);
         cfg.appendRule((x)->c.union(Arrays.asList(
                 (FSA<UChar,Integer,UChar>)x[0],
-                (FSA<UChar,Integer,UChar>)x[1]
+                (FSA<UChar,Integer,UChar>)x[2]
             )), regexp, regexp, bar, group);
         cfg.appendRule((x)->c.literal(Arrays.asList(),marker), group);
         cfg.appendRule((x)->c.concatenation(Arrays.asList(
@@ -67,7 +67,7 @@ public class RegExp {
     public static LR<UChar> getRegExpParser() {
         if(RegExp.regexpParser==null) {
             CFG<UChar> cfg=RegExp.getGrammar();
-            RegExp.regexpParser=new LR(cfg, 1, true);
+            RegExp.regexpParser=new LR(cfg, 1, false);
         };
         return new LR(RegExp.regexpParser);
     }
