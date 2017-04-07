@@ -69,19 +69,86 @@ public class CFG<T> {
         };
         return forest;
     }
-    /** Возвращает все цепочки из depth первых символов каждого нетерминала. */
-    public static<T> Map<Nonterminal, Set<List<T>>> first(Forest<Term<T>> forest, int depth) {
-        // Для каждого дерева/нетерминала создаем перечень префиксов
-        Map<Nonterminal, Set<List<T>>> result=new HashMap();
-        for(Map.Entry<Term<T>,Tree<Term<T>>> entry: forest.forest.entrySet()) {
-            Set<List<Term<T>>> dirtySet=forest.listBranches(entry.getValue(), depth, entry.getKey());
-            Set<List<T>> cleanSet=new HashSet();
-            for(List<Term<T>> dirtyList: dirtySet) {
-                List<T> cleanList=new ArrayList();
-                for(Term<T> term: dirtyList) cleanList.add(term.getTerminal());
-                cleanSet.add(cleanList);
+    /** 
+     * Вычисляет префиксы длины depth для правой части rhs правила,
+     * опираясь на ранее найденные префиксы first меньшей длины.
+     * Символ конца строки записывается как null.
+     */
+    public static<T> Set<List<T>> getPrefixes(RHS<T> rhs, Map<Nonterminal, Set<List<T>>> first, int depth) {
+        Set<List<T>> result=new HashSet();
+        Set<List<T>> expandable=new HashSet(); expandable.add(new ArrayList());
+        for(Term<T> symbol: rhs.symbols) {
+            Set<List<T>> newExpandable=new HashSet();
+            for(List<T> word: expandable) {
+                if(symbol.isTerminal()) {
+                    // Терминал просто добавляется в конец всех префиксов
+                    word.add(symbol.getTerminal());
+                    newExpandable.add(word);
+                } else {
+                    // Для нетерминала перебираем все префиксы и пытаемся их присоединить
+                    for(List<T> prefix: first.get(symbol.getNonterminal())) {
+                        List<T> newPrefix=new ArrayList(word);
+                        newPrefix.addAll(prefix);
+                        if(prefix.size()<1 || prefix.get(prefix.size()-1)!=null) {
+                            // Префиск известен только частично, поэтому
+                            // дальше расширять слово не удастся, переносим его в result.
+                            result.add(newPrefix.subList(0,depth));
+                        } else {
+                            // Добавляем префикс, будем его продолжать далее. Символ null не храним.
+                            newPrefix.remove(newPrefix.size()-1);
+                            newExpandable.add(newPrefix);
+                        };
+                    };
+                };
             };
-            result.put(entry.getKey().getNonterminal(), cleanSet);
+            // Длинные префиксы копируем в результат, остальные в expandable
+            expandable=new HashSet();
+            for(List<T> prefix: newExpandable) {
+                if(prefix.size()>=depth) result.add(prefix.subList(0,depth));
+                else expandable.add(prefix);
+            };
+        };
+        // Переносим все незавершенные префиксы в результат, добавляя конец строки в конец.
+        for(List<T> word: expandable) {
+            word.add(null);
+            result.add(word);
+        };
+        return result;
+    };
+    /** Возвращает все цепочки из depth первых символов каждого нетерминала. */
+    public Map<Nonterminal, Set<List<T>>> first(int depth) {
+        // Для каждого дерева/нетерминала создаем перечень префиксов.
+        // null в хранимых словах будет обозначать конец строки.
+        Map<Nonterminal, Set<List<T>>> prefixes=new HashMap();
+        // Первоначально инциализируем его префиксами нулевой длины
+        for(Nonterminal nt: this.rules.keySet()) 
+            prefixes.put(nt, new HashSet(Arrays.asList()));
+        int modified;
+        do {
+            modified=0;
+            // Вычисляем все префиксы для всех правил, пользуясь уже найденными правилами.
+            for(Map.Entry<Nonterminal, Set<RHS<T>>> entry: this.rules.entrySet()) {
+                Set<List<T>> set=prefixes.get(entry.getKey());
+                for(RHS<T> rhs: entry.getValue()) {
+                    // Считаем все префиксы для правой части
+                    Set<List<T>> prefs=CFG.getPrefixes(rhs, prefixes, depth);
+                    // Сохраняем префиксы
+                    for(List<T> prefix: prefs) 
+                        if(set.add(prefix)) modified++;
+                };
+            };
+        } while(modified>0);
+        // Убираем из префиксов не полные префиксы слова и символы null.
+        Map<Nonterminal, Set<List<T>>> result=new HashMap();
+        for(Map.Entry<Nonterminal, Set<List<T>>> entry: prefixes.entrySet()) {
+            Set<List<T>> set=new HashSet();
+            for(List<T> word: entry.getValue()) {
+                if(word.size()>0 && word.get(word.size()-1)==null) {
+                    word.remove(word.size()-1);
+                } else if(word.size()!=depth) continue;
+                set.add(word);
+            };
+            result.put(entry.getKey(), set);
         };
         return result;        
     }
@@ -160,8 +227,7 @@ public class CFG<T> {
         stations.put(start_rule, start_state);
         active.add(start_rule);
         // Создаем перечень стартовых симоволов
-        Forest<Term<T>> forest=this.forest();
-        Map<Nonterminal, Set<List<T>>> first=this.first(forest, depth);
+        Map<Nonterminal, Set<List<T>>> first=this.first(depth);
         if(debug) {
             System.err.println("FIRST:");
             for(Map.Entry<Nonterminal, Set<List<T>>> entry: first.entrySet()) {

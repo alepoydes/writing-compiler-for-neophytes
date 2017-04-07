@@ -23,24 +23,20 @@ public class CFGTest {
         cfg.appendRule(s,s,'a');
         cfg.appendRule(s);
 
-        System.out.println("Grammar:");
+        System.out.println("\nGrammar:");
         System.out.println(cfg);
         
-        Forest<Term<Character>> forest=cfg.forest();
-        System.out.println("Grammar forest:");
-        System.out.println(forest);
-    
-        Map<Nonterminal, Set<List<Character>>> first=CFG.first(forest, 0);
+        Map<Nonterminal, Set<List<Character>>> first=cfg.first(0);
         System.out.println("First(0):");
         System.out.println(first);
         assertEquals(new HashSet(Arrays.asList(Arrays.asList())), first.get(s));
 
-        first=CFG.first(forest, 1);
+        first=cfg.first(1);
         System.out.println("First(1):");
         System.out.println(first);
         assertEquals(new HashSet(Arrays.asList(Arrays.asList(),Arrays.asList('a'))), first.get(s));
 
-        first=CFG.first(forest, 2);
+        first=cfg.first(2);
         System.out.println("First(2):");
         System.out.println(first);
         assertEquals(new HashSet(
@@ -66,11 +62,7 @@ public class CFGTest {
         // <a> ::= <a>c | d<a> | b
 
         // zero length prefixes
-        Forest<Term<Character>> forest=cfg.forest();
-        System.out.println("Grammar forest:");
-        System.out.println(forest);
-
-        Map<Nonterminal, Set<List<Character>>> first=CFG.first(forest, 0);
+        Map<Nonterminal, Set<List<Character>>> first=cfg.first(0);
         System.out.println("First(0):");
         System.out.println(first);
         assertEquals(new HashSet(Arrays.asList(s,a)), first.keySet());
@@ -78,7 +70,7 @@ public class CFGTest {
         assertEquals(new HashSet(Arrays.asList(Arrays.asList())), first.get(a));
 
         // length one prefixes
-        first=CFG.first(forest, 1);
+        first=cfg.first(1);
         System.out.println("First(1):");
         System.out.println(first);
         assertEquals(new HashSet(Arrays.asList(s,a)), first.keySet());
@@ -87,7 +79,7 @@ public class CFGTest {
             first.get(s));
 
         // length two prefixes
-        first=CFG.first(forest, 2);
+        first=cfg.first(2);
         System.out.println("First(2):");
         System.out.println(first);
         assertEquals(new HashSet(Arrays.asList(s,a)), first.keySet());
@@ -145,8 +137,7 @@ public class CFGTest {
         // <s>* ::= <a>a | <empty>
         // <a> ::= <a>c | d<a> | b
         
-        Forest<Term<Character>> forest=cfg.forest();
-        Map<Nonterminal, Set<List<Character>>> first=CFG.first(forest, 0);
+        Map<Nonterminal, Set<List<Character>>> first=cfg.first(0);
         System.out.println("First(0):");
         System.out.println(first);
 
@@ -158,7 +149,7 @@ public class CFGTest {
         System.out.println("LR(0):");
         System.out.println(dfa0);
 
-        first=CFG.first(forest, 1);
+        first=cfg.first(1);
         System.out.println("First(1):");
         System.out.println(first);
 
