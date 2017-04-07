@@ -19,16 +19,19 @@ public class LR<T> {
     protected List<Object> results; // результаты семинтических действий для символов их stack
     protected List<State> states; // Текущее состояние автомата
     protected List<T> buffer; // Буфер символов для предпросмотра
+    protected List<Object> resultBuffer; // Данные для buffer
     protected Nonterminal startSymbol; // стартовый символ = цель сверток
 
     /** Копирует состояние автомата. */
     public LR(LR<T> other) {
         this.automaton=other.automaton;
         this.depth=other.depth;
+        this.startSymbol=other.startSymbol;
         this.stack=new ArrayList(other.stack);
         this.results=new ArrayList(other.results);
         this.states=new ArrayList(other.states);
-        this.startSymbol=other.startSymbol;
+        this.buffer=new ArrayList(other.buffer);
+        this.resultBuffer=new ArrayList(other.resultBuffer);
     };
     /** Создает автомат по данной грамматике. */
     public LR(CFG<T> grammar, int depth) {
@@ -48,6 +51,7 @@ public class LR<T> {
     public void reset() {
         this.stack=new ArrayList();
         this.buffer=new ArrayList();
+        this.resultBuffer=new ArrayList();
         this.results=new ArrayList();
         this.states=new ArrayList();
         this.states.add(this.automaton.initialState());
@@ -68,6 +72,14 @@ public class LR<T> {
      */
     public void feed(T symbol) {
         this.buffer.add(symbol);
+        this.resultBuffer.add(symbol);
+    };
+    public void feed(Pair<T,Object> symbol) {
+        this.feed(symbol.key, symbol.value);
+    }
+    public void feed(T symbol, Object result) {
+        this.buffer.add(symbol);
+        this.resultBuffer.add(result);
     };
     /**
      * Возвращает true, если достигнут конец строки, больше сдвигов делать нельзя.
@@ -107,7 +119,7 @@ public class LR<T> {
             if(this.buffer.size()<1) throw new ParserError("Empty stack");
             T term=this.buffer.remove(0);
             this.stack.add(new Term(term));
-            this.results.add(term);
+            this.results.add(this.resultBuffer.remove(0));
         };
         State newState=this.automaton.makeTransition(this.states.get(this.states.size()-1), arrow);
         if(newState==null) throw new ParserError("Wrong transition");
@@ -176,10 +188,10 @@ public class LR<T> {
      * Возвращает результат семантического действия или
      * выбрасывает ParserError при синтаксической ошибке.
      */
-    public Object parse(Iterator<T> string) throws ParserError {
+    public Object parse(Iterator<Pair<T,Object>> string) throws ParserError {
         return this.parse(string, false);
     }
-    public Object parse(Iterator<T> string, boolean debug) throws ParserError {
+    public Object parse(Iterator<Pair<T,Object>> string, boolean debug) throws ParserError {
         // Перезапускаем автомат
         this.reset();
         // Первоначально наполняем буфер

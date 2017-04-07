@@ -175,52 +175,52 @@ public class LRTest {
         System.err.println("\ntestParse1");
         LR<Character> parser=new LR(this.cfg, 0);
         List<Character> string=Arrays.asList('d','b','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList('b','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList();
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList('d','b','c','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
     }
 
     @Test(expected=ParserError.class) public void testParse2() throws ParserError {
         System.err.println("\ntestParse2");
         LR<Character> parser=new LR(this.cfg, 0);
         List<Character> string=Arrays.asList('d','b');
-        parser.parse(string.iterator(),true);
+        parser.parse(new CopyingIterator(string),true);
     }
 
     @Test(expected=ParserError.class) public void testParse3() throws ParserError {
         System.err.println("\ntestParse3");
         LR<Character> parser=new LR(this.cfg, 0);
         List<Character> string=Arrays.asList('a','a');
-        parser.parse(string.iterator(),true);
+        parser.parse(new CopyingIterator(string),true);
     }
 
     @Test public void testParseLR1() throws ParserError {
         System.err.println("\ntestParseLR1");
         LR<Character> parser=new LR(this.cfg, 1);
         List<Character> string=Arrays.asList('d','b','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList('b','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList();
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList('d','b','c','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
     }
 
     @Test public void testParseLR2() throws ParserError {
         System.err.println("\ntestParseLR2");
         LR<Character> parser=new LR(this.cfg, 2);
         List<Character> string=Arrays.asList('d','b','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList('b','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList();
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
         string=Arrays.asList('d','b','c','a');
-        assertNotNull(parser.parse(string.iterator(),true));
+        assertNotNull(parser.parse(new CopyingIterator(string),true));
     }
 }

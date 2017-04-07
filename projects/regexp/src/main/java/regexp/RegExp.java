@@ -77,7 +77,9 @@ public class RegExp {
     public static IDFA<UChar, Integer> compile(String regexp, boolean debug) throws ParserError {
         if(debug) System.err.println(String.format("Compiling regexp: %s", regexp));
         LR<UChar> parser=RegExp.getRegExpParser();
-        FSA<UChar,Integer,UChar> fsa=(FSA<UChar,Integer,UChar>)parser.parse(UChar.asList(regexp).iterator(),debug);
+        FSA<UChar,Integer,UChar> fsa=(FSA<UChar,Integer,UChar>)parser.parse(
+            new CopyingIterator(UChar.asList(regexp).iterator()),
+            debug);
         return new DFA(new KeyPredicateMap(), fsa, debug);
     }
 
