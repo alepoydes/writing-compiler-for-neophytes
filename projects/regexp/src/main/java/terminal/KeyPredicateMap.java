@@ -21,7 +21,7 @@ public class KeyPredicateMap<K extends ICharSet<K,K>,V> implements IPredicateMap
     }
     // Реализация интерфейса
     public V get(K key) {
-        return map.get(key);
+        return this.map.get(key);
     }
     public void put(K key, V value) throws IndexOutOfBoundsException {
         if(this.map.put(key, value)!=null) 
@@ -29,5 +29,8 @@ public class KeyPredicateMap<K extends ICharSet<K,K>,V> implements IPredicateMap
     }
     public Iterable<Map.Entry<K,V>> entrySet() {
         return this.map.entrySet();
+    }
+    @Override public String toString() { 
+        return this.map.toString();
     }
 }

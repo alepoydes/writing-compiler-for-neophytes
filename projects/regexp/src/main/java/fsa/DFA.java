@@ -33,12 +33,15 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
     /** Конструктор, строящий детерминированный автомат из недетерминированного.
      */
     public<M extends IPredicateMap<P,T,State,M>> DFA(M factory, FSA<T,F,P> automaton) {
+        this(factory, automaton, false);
+    }
+    public<M extends IPredicateMap<P,T,State,M>> DFA(M factory, FSA<T,F,P> automaton, boolean debug) {
         this(factory);
         // Перезапускаем автомат и сохраняем стартовое состояние
         Set<State> old_initial=automaton.initialState();
         // Создаем отображение старых состояний на новые
         Map<Set<State>,State> old2new=new HashMap();
-        State new_initial=this.newState(old_initial,automaton);
+        State new_initial=debug?this.newState(old_initial,automaton):this.newState();
         old2new.put(old_initial,new_initial);
         // Создаем массив состояний, которые мы еще не рассмотрели
         Deque<Set<State>> unprocessed=new ArrayDeque();
@@ -61,7 +64,7 @@ public class DFA<T,F,P extends ICharSet<T,P>> implements IDFA<T, F> {
                 State target;
                 if(old2new.containsKey(old_targets)) target=old2new.get(old_targets);
                 else {
-                    target=this.newState(old_targets,automaton);
+                    target=debug?this.newState(old_targets,automaton):this.newState();
                     old2new.put(old_targets,target);
                     // Если состояние новое, то добавляем его в список непроанализированных состояний
                     unprocessed.addLast(old_targets);

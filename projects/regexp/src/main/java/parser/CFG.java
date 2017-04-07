@@ -44,6 +44,8 @@ public class CFG<T> {
                 if(!this.rules.containsKey((Nonterminal)item)) 
                     throw(new IllegalArgumentException(String.format("Undefined non-terminal '%s'",item)));
                 args.add(new Term((Nonterminal)item));
+            } else if(item instanceof Term) {
+                args.add((Term<T>)item);
             } else args.add(new Term((T)item));
         };
         // Добавляем правило.
@@ -131,9 +133,20 @@ public class CFG<T> {
     };
     /** Возвращает автомат LR(depth), где depth - число символов для предпросмотра. */
     public IDFA<Lookahead<T>, Rule<T>> generateLRdet(int depth) {
-        return new DFA(new KeyPredicateMap(), generateLR(depth));
+        return this.generateLRdet(depth, false);
+    }
+    public IDFA<Lookahead<T>, Rule<T>> generateLRdet(int depth, boolean debug) {
+        FSA<Lookahead<T>, Rule<T>, Lookahead<T>> fsa=generateLR(depth, debug);
+        if(debug) {
+            System.err.println("Nondeterminate automaton:");
+            System.err.println(fsa);
+        };
+        return new DFA(new KeyPredicateMap(), fsa, debug);
     }
     public FSA<Lookahead<T>, Rule<T>, Lookahead<T>> generateLR(int depth) {
+        return this.generateLR(depth, false);
+    }
+    public FSA<Lookahead<T>, Rule<T>, Lookahead<T>> generateLR(int depth, boolean debug) {
         if(this.startSymbol==null) return null;
         FSA<Lookahead<T>,Rule<T>,Lookahead<T>> fsa=new FSA(new KeyPredicateMultiMap());
         // Перечень станций = всех нетерминалов с предпросмотрами (правая часть правила отброшена = null)
@@ -149,6 +162,17 @@ public class CFG<T> {
         // Создаем перечень стартовых симоволов
         Forest<Term<T>> forest=this.forest();
         Map<Nonterminal, Set<List<T>>> first=this.first(forest, depth);
+        if(debug) {
+            System.err.println("FIRST:");
+            for(Map.Entry<Nonterminal, Set<List<T>>> entry: first.entrySet()) {
+                System.err.print(String.format("%s:",entry.getKey()));
+                for(List<T> string: entry.getValue()) {
+                    System.err.print(" ");
+                    for(T c: string) System.err.print(c);
+                };
+                System.err.println();
+            };
+        };
         // Обходим все станции, пока они не закончатся. В процессе обхода могут добавляться новые станции.
         Rule<T> station;
         while((station=active.poll())!=null) {

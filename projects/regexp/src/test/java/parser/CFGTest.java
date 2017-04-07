@@ -17,10 +17,43 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class CFGTest {
+    @Test public void testFirstRec() {
+        CFG<Character> cfg=new CFG();
+        Nonterminal s=cfg.newNonterminal("S");
+        cfg.appendRule(s,s,'a');
+        cfg.appendRule(s);
+
+        System.out.println("Grammar:");
+        System.out.println(cfg);
+        
+        Forest<Term<Character>> forest=cfg.forest();
+        System.out.println("Grammar forest:");
+        System.out.println(forest);
+    
+        Map<Nonterminal, Set<List<Character>>> first=CFG.first(forest, 0);
+        System.out.println("First(0):");
+        System.out.println(first);
+        assertEquals(new HashSet(Arrays.asList(Arrays.asList())), first.get(s));
+
+        first=CFG.first(forest, 1);
+        System.out.println("First(1):");
+        System.out.println(first);
+        assertEquals(new HashSet(Arrays.asList(Arrays.asList(),Arrays.asList('a'))), first.get(s));
+
+        first=CFG.first(forest, 2);
+        System.out.println("First(2):");
+        System.out.println(first);
+        assertEquals(new HashSet(
+            Arrays.asList(Arrays.asList(),
+            Arrays.asList('a'),
+            Arrays.asList('a','a')
+            )), first.get(s));
+    };
+
     @Test public void testFirst() {
         CFG<Character> cfg=new CFG();
-        Nonterminal s=cfg.newNonterminal("s");
-        Nonterminal a=cfg.newNonterminal("a");
+        Nonterminal s=cfg.newNonterminal("S");
+        Nonterminal a=cfg.newNonterminal("A");
         cfg.appendRule(s,a,'a');
         cfg.appendRule(s);
         cfg.appendRule(a,'b');

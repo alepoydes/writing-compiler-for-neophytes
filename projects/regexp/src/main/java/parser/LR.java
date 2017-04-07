@@ -32,7 +32,14 @@ public class LR<T> {
     };
     /** Создает автомат по данной грамматике. */
     public LR(CFG<T> grammar, int depth) {
-        this.automaton=grammar.generateLRdet(depth);
+        this(grammar, depth, false);
+    }
+    public LR(CFG<T> grammar, int depth, boolean debug) {
+        this.automaton=grammar.generateLRdet(depth, debug);
+        if(debug) {
+            System.err.println("LR automaton:");
+            System.err.println(this.automaton);
+        };
         this.depth=depth;
         this.startSymbol=grammar.startSymbol;
         this.reset();
@@ -110,10 +117,10 @@ public class LR<T> {
     public Set<Rule<T>> listReductions() {
         Set<Rule<T>> all=this.automaton.getMarkers(this.states.get(this.states.size()-1));
         Set<Rule<T>> filtered=new HashSet();
-        for(Rule<T> rule: all) {
+        outerloop: for(Rule<T> rule: all) {
             if(rule.lookahead.size()!=Math.min(this.buffer.size(),this.depth)) continue;
             for(int n=0; n<rule.lookahead.size(); n++) 
-                if(rule.lookahead.get(n)!=this.buffer.get(n)) continue; 
+                if(!rule.lookahead.get(n).equals(this.buffer.get(n))) continue outerloop; 
             filtered.add(rule);
         };
         return filtered;
@@ -222,7 +229,7 @@ public class LR<T> {
             if(n<this.stack.size()) {
                 String term=this.stack.get(n).toString();
                 String result=this.results.get(n).toString();
-                if(!term.equals(result)) sb.append(String.format("%s(%s) ",term,result));
+                if(!term.equals(result)) sb.append(String.format("%s[%s] ",term,result));
                 else sb.append(String.format("%s ",term));
             };
         };
