@@ -81,7 +81,7 @@ public class RexExp {
         return new DFA(new KeyPredicateMap(), fsa, debug);
     }
 
-    protected IDFA<UChar, Integer> automaton;
+    public IDFA<UChar, Integer> automaton;
     public RexExp(String regexp) throws ParserError {
         this.automaton=RexExp.compile(regexp);
     }
