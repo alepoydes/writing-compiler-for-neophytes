@@ -503,6 +503,290 @@ public class Combinators<T,F,P> {
 так как язык описания регулярных выражений контекстно-свободен, а мы пока
 можем разбирать только регулярные выражения.
 
+Теперь напишем лексер.
+Лексер будет разбирать одновременно несколько регулярных выражений
+и возвращать выражение, которое первым сработает.
+Лексер будет пытаться собрать как можно больше символов в одно регулярное выражение.
+Создадим класс для лексера и помести его в 
+[lexer.Lexer](../projects/regexp/src/main/java/lexer/Lexer.java).
+Также как и регулярные выражения, лексер будет читать символы типа `T`,
+а переходы будет делать классам символов `P`.
+Чтобы узнать, какую из лексем удалось собрать, мы будем помечать остановочные 
+состояния маркерами типа `F`.
+
+```java
+public class Lexer<T,F,P> {
+```
+
+Конструктор лексера будет принимать на вход готовые автоматы,
+каждый из которых соответствует своей лексеме.
+Остановочные состояния должны быть уже помечены своим маркером для каждой лексемы.
+Конструктор построит собственный автомат `this.automaton` для лексера,
+который будет простым объединением автоматов, которые мы уже можем строить
+с помощью `Combinators.union`.
+
+```java
+    private IDFA<T,F> automaton;
+    public Lexer(List<FSA<T,F,P>> lexemes) { ... }
+```
+
+В отличии от регулярного выражения мы будем хранить состояние автомата
+внутри объекта для лексера.
+Поэтому нам потребуется метод для перезапуска лексера,
+если мы захочем разбирать новую строку.
+
+```java
+    private State state;
+    public void reset() { ... };
+```
+
+Метод `reset` должен перезапускать автомат внутри лексера,
+однако также его придется перезапускать и после выделения каждой лексемы.
+Поэтому мы создадим специализиорованный метод для перезапуска автомата
+при старте разбора новой лексемы.
+
+```java
+    public void startNewToken() { 
+        this.state=this.automaton.initialState();
+        ...
+    }
+```
+
+Самый важный метод лексера `parse_symbol`, который отдает лексеру новый символ для разбора.
+Может оказаться, что такой символ не может входить ни в одну из лексем,
+в этом случае лексер выбросит исключение, для которого мы создали
+собственный класс [lexer.LexerError](../projects/regexp/src/main/java/lexer/LexerError.java).
+Чтобы собрать лексему, прочитанного символа может быть недостаточно,
+тогда метод вернет `null`.
+Если лексему удалось выделить, то метод должен вернуть маркер,
+который сообщит нам какая лексема найдена, и подстроку,
+которую удалось свернуть в лексему.
+Для хранения этих значений мы создали специальный класс:
+[lexer.LexerResult](../projects/regexp/src/main/java/lexer/LexerResult.java).
+Заметим, что лексема выделяется, если новый символ в нее уже не удается добавить,
+т.е. последний прочитанный символ будет началом новой лексемы.
+
+```java
+    public LexerResult<T,F> parse_symbol(T symbol) throws LexerError { ... }
+```
+
+Когда разбираемая строка будет прочитана полностью,
+может оказаться, что суффикс строки тоже формирует лексему,
+которую мы однако не могли получить при вызове `parse_symbol`.
+Поэтому нам потребуется аналогичный метод,
+который должен вызываться в конце строки:
+
+```java
+    public LexerResult<T,F> parse_eol() throws LexerError { ... }
+```
+
+Метод `parse_symbol` делает переход в автомате,
+до тех пор, пока перехода по предлагаемому символу не окажется.
+Если дальше переходи некуда, то оба метода `parse_symbol` и `parse_eol`
+должны выяснить, является ли состояние остановочным,
+и если да, то вернуть маркеры лексем.
+Так как лексер получает символы по одному, а вернуть должен
+подстроку, отвечающую лексеме, то лексер должен накапливать
+эту подстроку в переменной, назовем ее `terminals`.
+
+```java
+    private List<T> terminals;
+```
+
+Наконец, удобно иметь метод, который будет создавать по данному потоку
+терминалов поток лексем.
+Это избавит нас от необходимости многократно вызываться `parse_symbol`,
+чтобы получить одну лексему.
+Потоки мы будем передавать через итераторы, что дает большой простор для
+конкретных реализаций.
+
+```java
+    public<R extends LexerResult<T,F>> Iterator<R> parse(Iterable<T> input) throws LexerError { ... }
+    public<R extends LexerResult<T,F>> ILexerIterator<R> parseE(Iterable<T> input) throws LexerError { ... }
+}
+```
+
+Стандартный интерфейс `java.util.Iterator` не может выбрасывать исключения,
+мы же используем исключения для сообщений об ошибках,
+поэтому мы создали собственный интерфейс итератора
+[lexer.ILexerIterator](../projects/regexp/src/main/java/lexer/ILexerIterator.java)..
+
+```java
+public interface ILexerIterator<T> {
+    boolean hasNextE() throws LexerError;
+    T nextE() throws LexerError;
+}
+```
+
+Класс [lexer.LexerResult](../projects/regexp/src/main/java/lexer/LexerResult.java).
+для хранения результата позволяет вернуть лексему и соответствующую ей строку,
+никаких других действий он не делает.
+
+```java
+public class LexerResult<T,F> {
+    LexerResult(List<T> string, F lexeme) { ...  }
+    public List<T> getString() { ... }
+    public F getLexeme() { ... }
+    @Override public String toString() { ... }
+    @Override public boolean equals(Object obj) { ... };
+    private List<T> string;
+    private F lexeme;
+}
+```
+
+Одной из важных задач синтаксического анализа текста является
+обнаружение ошибок, о которых человеку нужно сообщить в понятных ему терминах.
+В частности, человеку нужно сообщить место возникновения ошибки.
+Обычно место ошибки задает номеро строки и столбца.
+До сих пор мы не конкретизировали понятие терминала,
+однако чтобы говорить о номере строки, необходимо
+выделить среди нетерминалов символы перевода строки и т.п.
+Мы создадим специальный класс 
+[lexer.CharLexer](../projects/regexp/src/main/java/lexer/CharLexer.java),
+который расширяет
+[lexer.Lexer](../projects/regexp/src/main/java/lexer/Lexer.java)
+тем, что считает положение лексемы в файле,
+но работает только с терминалами типа `UChar`.
+
+```java
+public class CharLexer<F,P> extends Lexer<UChar,F,P> {
+    public CharLexer(List<FSA<UChar,F,P>> lexemes) { ... }
+    public void reset() { ... };
+    @Override public CharLexerResult<F> parse_symbol(UChar symbol) throws CharLexerError { ... }
+    @Override public CharLexerResult<F> parse_eol() throws CharLexerError { ... }
+    private int currentLine;
+    private int currentColumn;
+    private int line;
+    private int column;
+}
+```
+
+Класс `CharLexer` использует для лексического анализа методы своего
+предка, однако дополнительно обновляет при каждом чтении символа
+текущее положение `currentLine`, `currentColumn` в файле,
+а при выделении лексемы обновляет положение начала лексемы
+`line`, `column`.
+
+Положение лексемы в файле лексер должен каким-либо образом вернуть,
+для этого мы расширяем класс результата `LexerResult`,
+добавляя в новый класс 
+[lexer.CharLexerResult](../projects/regexp/src/main/java/lexer/CharLexerResult.java),
+поля для номера строки и столбца:
+
+```java
+public class CharLexerResult<F> extends LexerResult<UChar, F> {
+    CharLexerResult(List<UChar> string, F lexeme, int line, int column) { ... }
+    public int getLine() { ... }
+    public int getColumn() { ... }
+    @Override public boolean equals(Object obj) { ... };
+    @Override public String toString() { ...  };
+    private int line;
+    private int column;
+}
+```
+
+Наконец, исключение, выбрасываемое при ошибке лексического разбора,
+должно содержать информацию о месте ошибки.
+Поэтому наш новый лексер `CharLexer` выбрасывает расширение
+исключения `LexerError`, которое назовем
+[lexer.CharLexerError](../projects/regexp/src/main/java/lexer/CharLexerError.java).
+
+```java
+public class CharLexerError extends LexerError {
+    public CharLexerError(String message, int line, int column) { ... }
+    public CharLexerError(String message, Throwable throwable) { ... }
+    @Override public String getMessage() { ... };
+    private int line;
+    private int column;
+}
+```
+
+Для проверки корректности работы автоматов и лексера
+искользуются юнит-тесты, расположенные в поддиректориях
+[test/java/*](../projects/regexp/test/java/).
+Код юнит-тестов также дает использования наших класссов.
+
+В качестве еще одного примера реализуем программу,
+которая будет преобразовывать последовательность символов
+на стандартном потоке ввода в последовательность лексем
+для разбора регулярных выражений, которые будет записывать
+в стандартный поток ввода.
+
+```java
+public class App {
+```
+
+Так как наш лексер работает с итераторами, а стандартные методы Java предпочитают
+коллекции, то реализуем вспосогательные метод, собирающий все данные из 
+итератора в список.
+
+```java
+    public static<T> List<T> asList(Iterator<T> src) { ... };
+```
+
+Создадим перечисление со списком всех токенов.
+
+```java
+    enum Token {
+        LITERAL, STAR, PLUS, BEGIN, END, OR, OPTION, ANY;
+    }
+```
+
+Следующий метод возвращает лексер, который будет разпознавать символы,
+имеющие особенный смысл внутри регулярных выражений, а остальные
+будет запаковывать в `Token.LITERAL`.
+Реализация метода активно использует реализованные нами нарее комбинаторы.
+
+```java
+    static CharLexer<Token,UChar> makeLexer() {
+        Combinators<UChar,Token,UChar> combinators=new Combinators(new KeyPredicateMultiMap());
+        FSA<UChar,Token,UChar> star=combinators.literal(UChar.asList("*"),Token.STAR);
+        FSA<UChar,Token,UChar> plus=combinators.literal(UChar.asList("+"),Token.PLUS);
+        FSA<UChar,Token,UChar> option=combinators.literal(UChar.asList("?"),Token.OPTION);
+        FSA<UChar,Token,UChar> begin=combinators.literal(UChar.asList("("),Token.BEGIN);
+        FSA<UChar,Token,UChar> end=combinators.literal(UChar.asList(")"),Token.END);
+        FSA<UChar,Token,UChar> or=combinators.literal(UChar.asList("|"),Token.OR);
+        FSA<UChar,Token,UChar> any=combinators.literal(UChar.asList("."),Token.ANY);
+        HashSet<UChar> reserved=new HashSet(UChar.asList("*+?()|\\."));
+        HashSet<UChar> ordinary=new HashSet();
+        for(char c=32; c<127; c++) {
+            UChar uc=new UChar(c);
+            if(!reserved.contains(uc)) ordinary.add(uc);
+        };
+        FSA<UChar,Token,UChar> symbolOrdinary=combinators.anyOf(ordinary,Token.LITERAL);
+        FSA<UChar,Token,UChar> symbolEscaped=combinators.concatenation(Arrays.asList(
+            combinators.literal(UChar.asList("\\"),Token.LITERAL),
+            combinators.anyOf(reserved,Token.LITERAL)
+        ));
+        FSA<UChar,Token,UChar> symbol=combinators.union(Arrays.asList(symbolOrdinary,symbolEscaped));
+        return new CharLexer(Arrays.asList(star, plus, option, begin, end, or, symbol, any));
+    };
+```
+
+Наконец реализуем входную точку в программу метод `main`,
+который будет последовательно считывать из стандартного потока ввода
+строку за строкой запускать на каждой строке лексер.
+
+```java
+    public static void main(String[] args) throws IOException {
+        CharLexer<Token,UChar> lexer=makeLexer();
+        BufferedReader input=new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+        String str;
+        System.out.println("Enter regexp:");
+        while((str=input.readLine())!=null) {
+            List<UChar> list=UChar.asList(str);
+            try {
+                ILexerIterator<LexerResult<UChar,Token>> iterator=lexer.parseE(list);
+                while(iterator.hasNextE())
+                    System.out.println(iterator.nextE()); 
+            } catch(LexerError error) {
+                System.out.println(error);
+            };
+        }
+    }
+}
+```
+
 -------
 
 [Содержание](../tutorial/content.md)

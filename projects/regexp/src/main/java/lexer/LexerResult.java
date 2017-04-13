@@ -38,15 +38,11 @@ public class LexerResult<T,F> {
         return result.toString();
     };
     @Override public boolean equals(Object obj) { 
-        System.out.println("LexerResult::equals");
         if(obj==null) return false;
-        System.out.println("LexerResult::equals2");
         if(!(obj instanceof LexerResult)) return false;
-        System.out.println("LexerResult::equals3");
         LexerResult<T,F> result=(LexerResult)obj;
         if(this.lexeme!=result.lexeme) return false;
         return true;
-        //return this.string==result.string;
     };
     /**
      * Хранилице для подстроки, свернутой в лексемуу
