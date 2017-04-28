@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+java -cp build/classes/main/:/usr/share/java/antlr4-runtime.jar rustless.Interpreter

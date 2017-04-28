@@ -35,5 +35,7 @@ literal
 PREFIXOPERATOR : [-] ;
 BINARYOPERATOR : [+*/-] ;
 ID : [a-zA-Z][a-zA-Z0-9]* ;
-NEWLINE : [\r\n]+ ;
+NEWLINE : [\r]?[\n] ;
 INT     : [0-9]+ ;
+
+WS : [ \n\r\t]+ -> channel(HIDDEN); 
