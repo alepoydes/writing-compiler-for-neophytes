@@ -9,13 +9,15 @@ block: '{' (instruction ';')* '}' ;
 instruction
     : ID '=' expr 
     | functionCall
+    | macroCall
     ;
 functionCall: ID '(' argumentList ')';
+macroCall: ID '!' '(' argumentList ')';
 argumentList
     : 
     | arg+=argument ( ',' arg+=argument )*
     ;
-argument: ID ;
+argument: expr ;
 argumentDeclarationList
     : 
     | arg+=argumentDeclaration ( ',' arg+=argumentDeclaration )* 
@@ -27,15 +29,19 @@ expr
     | expr BINARYOPERATOR expr
     | '(' expr ')'
     | literal
+    | ID
     ;
 literal
     : INT
+    | STRING
     ;
 
 PREFIXOPERATOR : [-] ;
 BINARYOPERATOR : [+*/-] ;
 ID : [a-zA-Z][a-zA-Z0-9]* ;
-NEWLINE : [\r]?[\n] ;
+fragment NEWLINE : [\r]?[\n] ;
 INT     : [0-9]+ ;
+STRING: '"' ( ESC | ~[\\"] )* '"';
+fragment ESC : '\\"' | '\\\\' ;
 
 WS : [ \n\r\t]+ -> channel(HIDDEN); 
