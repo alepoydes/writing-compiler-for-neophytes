@@ -5,6 +5,10 @@ import rustless.ast.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+
+
 public class Interpreter {
     /** 
      * Import rust module with given name. 
@@ -33,19 +37,22 @@ public class Interpreter {
      */
     public void repl() {
         try {
-            System.out.format("Welcome to Rust REPL.\n");
-            // create a CharStream that reads from standard input
-            CharStream input = CharStreams.fromStream(System.in);
-            // create a lexer that feeds off of input CharStream
-            RustLexer lexer = new RustLexer(input);
-            // create a buffer of tokens pulled from the lexer
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-            // create a parser that feeds off the tokens buffer
-            RustParser parser = new RustParser(tokens);
+            System.out.format("Welcome to Rust read-evaluate-print loop. Type 'quit' to break the loop.\n");
+            BufferedReader buf=new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             while(true) {
                 System.out.format("> ");
-                ParseTree tree = parser.expr(); // begin parsing at expr rule
-                System.out.format("\n%s\n", tree.toStringTree(parser)); // print LISP-style tree
+                String str=buf.readLine();
+                if(str==null) break;
+                // create a CharStream that reads from standard input
+                CharStream input = CharStreams.fromString(str);
+                // create a lexer that feeds off of input CharStream
+                RustLexer lexer = new RustLexer(input);
+                // create a buffer of tokens pulled from the lexer
+                CommonTokenStream tokens = new CommonTokenStream(lexer);
+                // create a parser that feeds off the tokens buffer
+                RustParser parser = new RustParser(tokens);
+                RustParser.ReplContext ctx = parser.repl(); // begin parsing at repl rule
+                System.out.format("\n  %s\n\n", ctx.value);
             }
         } catch(java.io.IOException e) {
             System.out.format("IO Error\n");
