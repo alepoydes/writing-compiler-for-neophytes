@@ -3,11 +3,12 @@ package rustless;
 import rustless.ast.*;
 
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-
+import java.util.HashMap;
 
 public class Interpreter {
     /** 
@@ -39,6 +40,7 @@ public class Interpreter {
         try {
             System.out.format("Welcome to Rust read-evaluate-print loop. Type 'quit' to break the loop.\n");
             BufferedReader buf=new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+            HashMap<String, Double> variables = new HashMap();
             while(true) {
                 System.out.format("> ");
                 String str=buf.readLine();
@@ -51,8 +53,11 @@ public class Interpreter {
                 CommonTokenStream tokens = new CommonTokenStream(lexer);
                 // create a parser that feeds off the tokens buffer
                 RustParser parser = new RustParser(tokens);
-                RustParser.ReplContext ctx = parser.repl(); // begin parsing at repl rule
-                System.out.format("\n  %s\n\n", ctx.value);
+                try {
+                    RustParser.ReplContext ctx = parser.repl(variables); // begin parsing at repl rule
+                } catch(ParseCancellationException e) {
+                    System.out.format("%s\n",e.getMessage());
+                };
             }
         } catch(java.io.IOException e) {
             System.out.format("IO Error\n");
