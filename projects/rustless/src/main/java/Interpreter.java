@@ -15,7 +15,7 @@ public class Interpreter {
      * Import rust module with given name. 
      * At the moment, the module should be located in the working directory.
      */
-    public void include(String name) {
+    public void include(String name, Context ctx) {
         System.out.format("Loading '%s'\n", name);
         try {
             // create a CharStream that reads from standard input
@@ -26,8 +26,7 @@ public class Interpreter {
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             // create a parser that feeds off the tokens buffer
             RustParser parser = new RustParser(tokens);
-            ParseTree tree = parser.module(); // begin parsing at module rule
-            System.out.println(tree.toStringTree(parser)); // print LISP-style tree
+            ParseTree tree = parser.repl(ctx); // begin parsing at module rule
         } catch(java.io.IOException e) {
             System.out.format("Failed to read '%s'\n", name);
         };
@@ -36,11 +35,10 @@ public class Interpreter {
      * Read-eval-print loop.
      * Only <expr> are understood.
      */
-    public void repl() {
+    public void repl(Context ctx) {
         try {
             System.out.format("Welcome to Rust read-evaluate-print loop. Type 'quit' to break the loop.\n");
             BufferedReader buf=new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-            HashMap<String, Double> variables = new HashMap();
             while(true) {
                 System.out.format("> ");
                 String str=buf.readLine();
@@ -54,7 +52,7 @@ public class Interpreter {
                 // create a parser that feeds off the tokens buffer
                 RustParser parser = new RustParser(tokens);
                 try {
-                    RustParser.ReplContext ctx = parser.repl(variables); // begin parsing at repl rule
+                    RustParser.ReplContext replctx = parser.repl(ctx); // begin parsing at repl rule
                 } catch(ParseCancellationException e) {
                     System.out.format("%s\n",e.getMessage());
                 };
@@ -65,9 +63,10 @@ public class Interpreter {
     }
     public static void main(String[] args) throws java.io.IOException {
         Interpreter interpreter=new Interpreter();
+        Context ctx = new Context();
         // Loading all sources provided in command line
-        for(String name: args) interpreter.include(name);
+        for(String name: args) interpreter.include(name, ctx);
         // Starting read-eval-print loop 
-        interpreter.repl();        
+        interpreter.repl(ctx);
     }
 }
