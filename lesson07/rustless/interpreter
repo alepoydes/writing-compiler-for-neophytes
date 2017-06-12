@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+build/install/rustless/bin/rustless "$@"
