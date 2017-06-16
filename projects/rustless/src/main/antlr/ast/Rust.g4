@@ -3,109 +3,107 @@ grammar Rust;
     package rustless.ast;
 
     import rustless.*;
+    import rustless.command.*;
 
     import java.util.Map;
     import java.util.Arrays;
 }
 
-repl[Context ctx]
+repl returns [Command cmd]
     : 'quit' EOF { System.exit(0); }
-    | expr[ctx] EOF { System.out.format("\n  %s\n\n", $expr.value.toString()); } 
-    | instruction[ctx]
+    | instruction EOF { $cmd=$instruction.cmd; }
     ; 
-module[Context ctx]: (function[ctx])* EOF ;
-function[Context ctx]: 'fn' ID '(' argumentDeclarationList ')' block[ctx] (';'|) ; 
-block[Context ctx]: '{' (instruction[ctx] ';')* '}' ;
-instruction[Context ctx]
-    : declaration[ctx]
-    | ID '=' expr[ctx] { 
-            if(!$ctx.variables.containsKey($ID.text)) 
-                throw new ParseCancellationException(String.format("Variable '%s' is not defined",$ID.text));
-            $ctx.variables.put($ID.text,$expr.value); 
-        } 
-    | functionCall[ctx]
-    | macroCall[ctx]
+module returns [List<Command> cmds]
+    : { $cmds=new ArrayList(); } (instruction { $cmds.add($instruction.cmd); })* EOF 
     ;
-declaration[Context ctx]
-    : 'let' 'mut'? ID { $ctx.variables.put($ID.text,new Value()); }
-    | 'let' 'mut'? ID '=' expr[ctx] { $ctx.variables.put($ID.text,$expr.value); }
+function: 'fn' ID '(' argumentDeclarationList ')' block (';'|) ; 
+block returns [Command cmd] locals[List<Command> cmds]
+    : '{' { $cmds=new ArrayList(); } (instruction ';'? { $cmds.add($instruction.cmd); } )* '}' { 
+        $cmd=new Block($cmds); }
     ;
-functionCall[Context ctx] returns [Value value]
-    : ID '(' argumentList[ctx] ')' { $value=ctx.call($ID.text,$argumentList.arg); }
+instruction returns [Command cmd]
+    : block { $cmd=$block.cmd; }
+    | declaration { $cmd=$declaration.cmd; } 
+    | ID '=' expr { $cmd=new Assign($ID.text, $expr.cmd); } 
+    | functionCall { $cmd=$functionCall.cmd; }
+    | macroCall { $cmd=$macroCall.cmd; }
+    | expr { $cmd=$expr.cmd; }
     ;
-macroCall[Context ctx]
-    : ID '!' '(' argumentList[ctx] ')'  { throw new ParseCancellationException("Macros are not implemented"); }
+declaration returns [Command cmd] locals [boolean mut, Command value]
+    : 'let' ('mut' {$mut=true;})? ID ( '=' a=expr { $value=$a.cmd; })?
+        { $cmd=new Declare($ID.text,$mut,null,$value); }
     ;
-argumentList[Context ctx] returns [List<Value> arg]
-    : 
-    | a=argument[ctx] { $arg=new ArrayList(); $arg.add($a.value); } ( ',' b=argument[ctx] { $arg.add($b.value); } )*
+functionCall returns [Command cmd]
+    : ID '(' argumentList ')' { $cmd=new Call($ID.text,$argumentList.arg); }
     ;
-argument[Context ctx] returns [Value value]: expr[ctx] { $value=$expr.value; } ;
+macroCall returns [Command cmd]
+    : ID '!' '(' argumentList ')'  { throw new ParseCancellationException("Macros are not implemented"); }
+    ;
+argumentList returns [List<Command> arg]
+    : { $arg=new ArrayList(); } a=argument { $arg.add($a.cmd); } ( ',' b=argument { $arg.add($b.cmd); } )*
+    ;
+argument returns [Command cmd]: expr { $cmd=$expr.cmd; } ;
 argumentDeclarationList
     : 
     | arg+=argumentDeclaration ( ',' arg+=argumentDeclaration )* 
     ;
 argumentDeclaration: ID ;
-expr[Context ctx] returns [Value value]
-    : a=expr4[ctx] op='||' b=expr[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr4[ctx] { $value=$a.value; }
+expr returns [Command cmd]
+    : a=expr4 op='||' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr4 { $cmd=$a.cmd; }
     ;
-expr4[Context ctx] returns [Value value]
-    : a=expr5[ctx] op='&&' b=expr4[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr5[ctx] { $value=$a.value; }
+expr4 returns [Command cmd]
+    : a=expr5 op='&&' b=expr4 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr5 { $cmd=$a.cmd; }
     ;        
-expr5[Context ctx] returns [Value value]
-    : a=expr6[ctx] op=('<'|'>'|'>='|'<='|'=='|'!=') b=expr5[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr6[ctx] { $value=$a.value; }
+expr5 returns [Command cmd]
+    : a=expr6 op=('<'|'>'|'>='|'<='|'=='|'!=') b=expr5 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr6 { $cmd=$a.cmd; }
     ;    
-expr6[Context ctx] returns [Value value]
-    : a=expr7[ctx] op='|' b=expr6[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr7[ctx] { $value=$a.value; }
+expr6 returns [Command cmd]
+    : a=expr7 op='|' b=expr6 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr7 { $cmd=$a.cmd; }
     ;                
-expr7[Context ctx] returns [Value value]
-    : a=expr8[ctx] op='^' b=expr7[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr8[ctx] { $value=$a.value; }
+expr7 returns [Command cmd]
+    : a=expr8 op='^' b=expr7 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr8 { $cmd=$a.cmd; }
     ;            
-expr8[Context ctx] returns [Value value]
-    : a=expr9[ctx] op='&' b=expr8[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr9[ctx] { $value=$a.value; }
+expr8 returns [Command cmd]
+    : a=expr9 op='&' b=expr8 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr9 { $cmd=$a.cmd; }
     ;        
-expr9[Context ctx] returns [Value value]
-    : a=expr10[ctx] op=('<<'|'>>') b=expr9[ctx] { $value=ctx.call($op.text,$a.value,$b.value); }
-    | a=expr10[ctx] { $value=$a.value; }
+expr9 returns [Command cmd]
+    : a=expr10 op=('<<'|'>>') b=expr9 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr10 { $cmd=$a.cmd; }
     ;    
-expr10[Context ctx] returns [Value value]
-    : a=expr20[ctx] { $value=$a.value; }
+expr10 returns [Command cmd]
+    : a=expr20 { $cmd=$a.cmd; }
         (
-            op=('+'|'-') b=expr20[ctx] { $value=ctx.call($op.text,$value,$b.value); }
+            op=('+'|'-') b=expr20 { $cmd=new Call($op.text,$cmd,$b.cmd); }
         )*
     ;
-expr20[Context ctx] returns [Value value]
-    : a=expr30[ctx] { $value=$a.value; } 
+expr20 returns [Command cmd]
+    : a=expr30 { $cmd=$a.cmd; } 
         (
-            op=('*'|'/'|'%') b=expr30[ctx] { $value=ctx.call($op.text,$value,$b.value); }
+            op=('*'|'/'|'%') b=expr30 { $cmd=new Call($op.text,$cmd,$b.cmd); }
         )*
     ;
-expr30[Context ctx] returns [Value value]
-    : functionCall[ctx] { $value=$functionCall.value; }
-    | op=('-'|'!') a=expr30[ctx] { $value=ctx.call($op.text,$a.value); }
-    | b=expr40[ctx] { $value=$b.value; }
+expr30 returns [Command cmd]
+    : functionCall { $cmd=$functionCall.cmd; }
+    | op=('-'|'!') a=expr30 { $cmd=new Call($op.text,$a.cmd); }
+    | b=expr40 { $cmd=$b.cmd; }
     ;
-expr40[Context ctx] returns [Value value]
-    : ID { 
-            $value=$ctx.variables.get($ID.text); 
-            if($value==null) 
-                throw new ParseCancellationException(String.format("Variable '%s' is not defined",$ID.text));
-         } 
-    | literal { $value=$literal.value; }
-    | '(' expr[ctx] ')' { $value=$expr.value; }
+expr40 returns [Command cmd]
+    : ID { $cmd=new Access($ID.text); } 
+    | literal { $cmd=$literal.cmd; }
+    | '(' expr ')' { $cmd=$expr.cmd; }
     ;
-literal returns [Value value]
-    : FLOAT { $value=new Value(Double.parseDouble($text)); }
-    | INT { $value=new Value(Integer.parseInt($text)); }
-    | STRING { $value=new Value($text); } 
-    | TRUE { $value=new Value(true); } 
-    | FALSE { $value=new Value(false); } 
+literal returns [Command cmd]
+    : FLOAT { $cmd=new Literal(new Value(Double.parseDouble($text))); }
+    | INT { $cmd=new Literal(new Value(Integer.parseInt($text))); }
+    | STRING { $cmd=new Literal(new Value($text)); } 
+    | TRUE { $cmd=new Literal(new Value(true)); } 
+    | FALSE { $cmd=new Literal(new Value(false)); } 
     ;
 
 TRUE: 'true' ;

@@ -73,10 +73,10 @@ public class Context {
         this.variables.put(fullname, new Value(fn,result,argument));
     }
 
-    public Value call(String name, Value... arguments) throws ParseCancellationException {
+    public Value call(String name, Value... arguments) throws ExecutionError {
         return this.call(name, Arrays.asList(arguments));
     }
-    public Value call(String name, List<Value> arguments) throws ParseCancellationException {
+    public Value call(String name, List<Value> arguments) throws ExecutionError {
         Value argument=new Value(arguments);
         String fullname=String.format("%s%s",name,argument.type.toString());
         Value var=this.variables.get(fullname);

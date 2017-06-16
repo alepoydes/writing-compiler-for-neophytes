@@ -32,6 +32,10 @@ public class Value {
         this.data=value;
         this.type=type;
     }
+    public Value(Type type) {
+        this.data=type.defaultValue();
+        this.type=type;
+    }
     public Value(List<Value> values) {
         ArrayList<Type> types=new ArrayList(values.size());
         ArrayList<Object> data=new ArrayList(values.size());
@@ -46,8 +50,8 @@ public class Value {
         this.data=fn;
         this.type=new LambdaType(argument,result);
     }
-    protected Type type;
-    protected Object data;
+    public Type type;
+    public Object data;
     
     /** Methods of Object */
     @Override public String toString() {

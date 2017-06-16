@@ -1,6 +1,7 @@
 package rustless;
 
 import rustless.ast.*;
+import rustless.command.*;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.*;
@@ -26,7 +27,14 @@ public class Interpreter {
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             // create a parser that feeds off the tokens buffer
             RustParser parser = new RustParser(tokens);
-            ParseTree tree = parser.repl(ctx); // begin parsing at module rule
+            try {
+                RustParser.ModuleContext modulectx = parser.module(); // begin parsing at module rule
+                for(Command cmd: modulectx.cmds) cmd.run(ctx);
+            } catch(ParseCancellationException e) {
+                System.out.format("%s\n",e.getMessage());
+            } catch(ExecutionError e) {
+                System.out.format("%s\n",e.getMessage());
+            };
         } catch(java.io.IOException e) {
             System.out.format("Failed to read '%s'\n", name);
         };
@@ -53,8 +61,13 @@ public class Interpreter {
                 RustParser parser = new RustParser(tokens);
                 //parser.setTrace(true);
                 try {
-                    RustParser.ReplContext replctx = parser.repl(ctx); // begin parsing at repl rule
+                    RustParser.ReplContext replctx = parser.repl(); // begin parsing at repl rule
+                    Value value=replctx.cmd.run(ctx);
+                    if(value!=null) 
+                        System.out.format("\n  %s\n\n", value.toString());
                 } catch(ParseCancellationException e) {
+                    System.out.format("%s\n",e.getMessage());
+                } catch(ExecutionError e) {
                     System.out.format("%s\n",e.getMessage());
                 };
             }

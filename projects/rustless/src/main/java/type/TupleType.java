@@ -2,12 +2,18 @@ package rustless.type;
 
 import java.lang.StringBuilder;
 import java.util.List;
+import java.util.ArrayList;
 
 // Parent class for all types
 public class TupleType extends Type {
     public TupleType(List<Type> content) {
         this.content=content;
     };
+    @Override public Object defaultValue() {  
+        List<Object> result=new ArrayList();
+        for(Type type: this.content) result.add(type.defaultValue());
+        return result;
+    }
     protected List<Type> content;
     /** Methods of Object */
     @Override public String toString() { 

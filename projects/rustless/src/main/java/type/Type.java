@@ -3,6 +3,7 @@ package rustless.type;
 // Parent class for all types
 public class Type {
 	public boolean isCallable() { return false; }
+	public Object defaultValue() { return null; }
     /** Methods of Object */
    	@Override public boolean equals(Object obj) {
 		if (this==obj)return true;
