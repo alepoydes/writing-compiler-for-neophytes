@@ -1,6 +1,7 @@
 package rustless;
 
 import rustless.type.*;
+import rustless.*;
 
 import java.lang.StringBuilder;
 import java.util.List;
@@ -52,7 +53,11 @@ public class Value {
     }
     public Type type;
     public Object data;
-    
+    public boolean toBoolean() throws ExecutionError { 
+        if(this.data instanceof Boolean) return (Boolean)this.data;
+        else throw new ExecutionError(String.format("Using '%s' in boolean context",this.type.toString()));
+    }
+
     /** Methods of Object */
     @Override public String toString() {
         StringBuilder builder=new StringBuilder();

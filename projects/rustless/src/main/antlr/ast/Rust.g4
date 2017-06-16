@@ -11,22 +11,19 @@ grammar Rust;
 
 repl returns [Command cmd]
     : 'quit' EOF { System.exit(0); }
-    | instruction EOF { $cmd=$instruction.cmd; }
+    | statement EOF { $cmd=$statement.cmd; }
     ; 
 module returns [List<Command> cmds]
-    : { $cmds=new ArrayList(); } (instruction { $cmds.add($instruction.cmd); })* EOF 
+    : { $cmds=new ArrayList(); } (statement ';'? { $cmds.add($statement.cmd); })* EOF 
     ;
 function: 'fn' ID '(' argumentDeclarationList ')' block (';'|) ; 
 block returns [Command cmd] locals[List<Command> cmds]
-    : '{' { $cmds=new ArrayList(); } (instruction ';'? { $cmds.add($instruction.cmd); } )* '}' { 
+    : '{' { $cmds=new ArrayList(); } (statement ';'? { $cmds.add($statement.cmd); } )* '}' { 
         $cmd=new Block($cmds); }
     ;
-instruction returns [Command cmd]
-    : block { $cmd=$block.cmd; }
-    | declaration { $cmd=$declaration.cmd; } 
+statement returns [Command cmd]
+    : declaration { $cmd=$declaration.cmd; } 
     | ID '=' expr { $cmd=new Assign($ID.text, $expr.cmd); } 
-    | functionCall { $cmd=$functionCall.cmd; }
-    | macroCall { $cmd=$macroCall.cmd; }
     | expr { $cmd=$expr.cmd; }
     ;
 declaration returns [Command cmd] locals [boolean mut, Command value]
@@ -48,55 +45,27 @@ argumentDeclarationList
     | arg+=argumentDeclaration ( ',' arg+=argumentDeclaration )* 
     ;
 argumentDeclaration: ID ;
+condition returns [Command cmd] locals [Command negative]
+    : 'if' c=expr p=block ('else' n=block { $negative=$n.cmd; })? { $cmd=new Condition($c.cmd,$p.cmd,$negative); }
+    ;
 expr returns [Command cmd]
-    : a=expr4 op='||' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr4 { $cmd=$a.cmd; }
-    ;
-expr4 returns [Command cmd]
-    : a=expr5 op='&&' b=expr4 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr5 { $cmd=$a.cmd; }
-    ;        
-expr5 returns [Command cmd]
-    : a=expr6 op=('<'|'>'|'>='|'<='|'=='|'!=') b=expr5 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr6 { $cmd=$a.cmd; }
-    ;    
-expr6 returns [Command cmd]
-    : a=expr7 op='|' b=expr6 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr7 { $cmd=$a.cmd; }
-    ;                
-expr7 returns [Command cmd]
-    : a=expr8 op='^' b=expr7 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr8 { $cmd=$a.cmd; }
-    ;            
-expr8 returns [Command cmd]
-    : a=expr9 op='&' b=expr8 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr9 { $cmd=$a.cmd; }
-    ;        
-expr9 returns [Command cmd]
-    : a=expr10 op=('<<'|'>>') b=expr9 { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
-    | a=expr10 { $cmd=$a.cmd; }
-    ;    
-expr10 returns [Command cmd]
-    : a=expr20 { $cmd=$a.cmd; }
-        (
-            op=('+'|'-') b=expr20 { $cmd=new Call($op.text,$cmd,$b.cmd); }
-        )*
-    ;
-expr20 returns [Command cmd]
-    : a=expr30 { $cmd=$a.cmd; } 
-        (
-            op=('*'|'/'|'%') b=expr30 { $cmd=new Call($op.text,$cmd,$b.cmd); }
-        )*
-    ;
-expr30 returns [Command cmd]
-    : functionCall { $cmd=$functionCall.cmd; }
-    | op=('-'|'!') a=expr30 { $cmd=new Call($op.text,$a.cmd); }
-    | b=expr40 { $cmd=$b.cmd; }
-    ;
-expr40 returns [Command cmd]
     : ID { $cmd=new Access($ID.text); } 
     | literal { $cmd=$literal.cmd; }
     | '(' expr ')' { $cmd=$expr.cmd; }
+    | functionCall { $cmd=$functionCall.cmd; }
+    | macroCall { $cmd=$macroCall.cmd; }
+    | block { $cmd=$block.cmd; }
+    | condition  { $cmd=$condition.cmd; }
+    | op=('-'|'!') a=expr { $cmd=new Call($op.text,$a.cmd); }
+    | a=expr op=('*'|'/'|'%') b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op=('+'|'-') b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op=('<<'|'>>') b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op='&' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op='^' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op='|' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op=('<'|'>'|'>='|'<='|'=='|'!=') b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op='&&' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
+    | a=expr op='||' b=expr { $cmd=new Call($op.text,$a.cmd,$b.cmd); }
     ;
 literal returns [Command cmd]
     : FLOAT { $cmd=new Literal(new Value(Double.parseDouble($text))); }
@@ -116,3 +85,4 @@ STRING : '"' ( ESC | ~[\\"] )* '"';
 fragment ESC : '\\"' | '\\\\' ;
 
 WS : [ \n\r\t]+ -> channel(HIDDEN); 
+ErrorTocken : . ;
